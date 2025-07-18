@@ -40,23 +40,12 @@ const BOOK_DESK_TOOL: Tool = {
         format: 'date',
         description: 'The date to book the desk in YYYY-MM-DD format.',
       },
-      resource_id: {
-        type: 'string',
-        description:
-          'Optional: The ID of the specific desk/resource. Defaults to the server environment setting.',
-      },
-      workspace_id: {
-        type: 'string',
-        description:
-          'Optional: The ID of the workspace. Defaults to the server environment setting.',
-      },
-      zone_item_id: {
+      desk_id: {
         type: 'number',
-        description:
-          'Optional: The ID of the zone item. Defaults to the server environment setting.',
+        description: 'The ID of the specific desk (zone item ID) to book.',
       },
     },
-    required: ['date'],
+    required: ['date', 'desk_id'],
   },
 };
 
@@ -174,21 +163,20 @@ export class DeskbirdMcpServer {
         throw new Error("Missing required parameter: 'date'");
       }
 
-      // 3. Merge tool inputs with environment fallbacks
-      const resourceId = params.resource_id || process.env.DESKBIRD_RESOURCE_ID;
-      const workspaceId =
-        params.workspace_id || process.env.DESKBIRD_WORKSPACE_ID;
-      const zoneItemIdStr =
-        params.zone_item_id?.toString() || process.env.DESKBIRD_ZONE_ITEM_ID;
-
-      if (!resourceId || !workspaceId || !zoneItemIdStr) {
-        throw new Error(
-          'Desk booking details (resourceId, workspaceId, zoneItemId) must be provided either in the tool call or as environment variables.'
-        );
+      if (!params.desk_id) {
+        throw new Error("Missing required parameter: 'desk_id'");
       }
-      const zoneItemId = parseInt(zoneItemIdStr, 10);
 
-      // 4. Get a fresh access token
+      // 3. Get required values from environment variables
+      const resourceId = process.env.DESKBIRD_RESOURCE_ID;
+      const workspaceId = process.env.DESKBIRD_WORKSPACE_ID;
+      const zoneItemId = params.desk_id;
+
+      if (!resourceId || !workspaceId) {
+        throw new Error(
+          'Environment variables DESKBIRD_RESOURCE_ID and DESKBIRD_WORKSPACE_ID must be set.'
+        );
+      }      // 4. Get a fresh access token
       const accessToken = await this._getNewAccessToken(
         refreshToken,
         googleApiKey

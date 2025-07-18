@@ -310,9 +310,7 @@ export interface CreateBookingResponse {
 // Tool-specific types
 export interface BookDeskParams {
   date: string;
-  resource_id?: string;
-  workspace_id?: string;
-  zone_item_id?: number;
+  desk_id: number;
 }
 
 export interface GetUserBookingsParams {
