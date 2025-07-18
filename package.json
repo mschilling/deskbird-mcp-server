@@ -1,0 +1,31 @@
+{
+  "name": "deskbird-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for Deskbird desk booking integration.",
+  "main": "dist/main.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "dev": "tsc && node dist/main.js"
+  },
+  "keywords": [
+    "mcp",
+    "deskbird",
+    "desk-booking",
+    "server"
+  ],
+  "author": "@mschilling",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.15.1",
+    "dotenv-flow": "^4.1.0",
+    "luxon": "^3.7.1"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.6.2",
+    "@types/node": "^24.0.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}
