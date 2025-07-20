@@ -17,7 +17,13 @@ npm install
 
 ## Configuration
 
-Create a `.env` file with the following variables:
+Copy the example environment file and configure it:
+
+```bash
+cp .env.example .env
+```
+
+Then edit `.env` with your actual values:
 
 ```env
 REFRESH_TOKEN=your_deskbird_refresh_token
@@ -71,7 +77,7 @@ Books a desk at the office for a specific date.
 
 ## Requirements
 
-- Node.js 22+ (see `.nvmrc`)
+- **Node.js 22+** (see `.nvmrc` for exact version)
 - Valid Deskbird account and API credentials
 - Google API key for token refresh
 
