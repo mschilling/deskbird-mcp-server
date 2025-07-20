@@ -1,31 +1,26 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import {
   CallToolRequest,
   CallToolRequestSchema,
-  ListToolsRequestSchema,
-  TextContent,
-  Tool,
   CallToolResult,
+  ListToolsRequestSchema,
+  Tool
 } from '@modelcontextprotocol/sdk/types.js';
-import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
-import { DateTime } from 'luxon';
 import * as dotenvFlow from 'dotenv-flow';
+import { DateTime } from 'luxon';
 import {
   BookDeskParams,
-  GetUserBookingsParams,
-  GetUserFavoritesParams,
-  GetUserInfoParams,
-  FavoriteDeskParams,
-  UnfavoriteDeskParams,
-  FavoriteResourceResponse,
-  UnfavoriteResourceResponse,
-  UserResponse,
+  BookingsListResponse,
   CreateBookingRequest,
   CreateBookingResponse,
-  BookingsListResponse,
-  ToolResult,
-  GetUserBookingsResult,
+  FavoriteDeskParams,
+  FavoriteResourceResponse,
+  GetUserBookingsParams,
+  UnfavoriteDeskParams,
+  UnfavoriteResourceResponse,
+  UserResponse
 } from './types.js';
 
 // Load environment variables from .env files
