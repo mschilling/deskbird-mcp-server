@@ -6,10 +6,20 @@ import {
   ListToolsRequestSchema,
   TextContent,
   Tool,
+  CallToolResult,
 } from '@modelcontextprotocol/sdk/types.js';
 import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { DateTime } from 'luxon';
 import * as dotenvFlow from 'dotenv-flow';
+import {
+  BookDeskParams,
+  GetUserBookingsParams,
+  CreateBookingRequest,
+  CreateBookingResponse,
+  BookingsListResponse,
+  ToolResult,
+  GetUserBookingsResult,
+} from './types.js';
 
 // Load environment variables from .env files
 dotenvFlow.config();
@@ -30,52 +40,50 @@ const BOOK_DESK_TOOL: Tool = {
         format: 'date',
         description: 'The date to book the desk in YYYY-MM-DD format.',
       },
-      resource_id: {
-        type: 'string',
-        description:
-          'Optional: The ID of the specific desk/resource. Defaults to the server environment setting.',
-      },
-      workspace_id: {
-        type: 'string',
-        description:
-          'Optional: The ID of the workspace. Defaults to the server environment setting.',
-      },
-      zone_item_id: {
+      desk_id: {
         type: 'number',
-        description:
-          'Optional: The ID of the zone item. Defaults to the server environment setting.',
+        description: 'The ID of the specific desk (zone item ID) to book.',
       },
     },
-    required: ['date'],
+    required: ['date', 'desk_id'],
   },
-  outputSchema: {
+};
+
+// --- Tool Definition for retrieving user bookings ---
+const GET_USER_BOOKINGS_TOOL: Tool = {
+  name: 'deskbird_get_user_bookings',
+  description: 'Retrieves a list of the current user\'s desk bookings with optional filtering.',
+  inputSchema: {
     type: 'object',
     properties: {
-      success: {
+      skip: {
+        type: 'number',
+        description: 'Number of bookings to skip for pagination. Defaults to 0.',
+        default: 0,
+      },
+      limit: {
+        type: 'number',
+        description: 'Maximum number of bookings to return. Defaults to 10.',
+        default: 10,
+      },
+      include_instances: {
         type: 'boolean',
-        description: 'Whether the booking was successfully created.',
+        description: 'Whether to include booking instances. Defaults to true.',
+        default: true,
       },
-      message: {
-        type: 'string',
-        description: 'A human-readable summary of the result.',
-      },
-      details: {
-        type: 'object',
-        description: 'The detailed response from the Deskbird API.',
-        properties: {
-          successfulBookings: { type: 'array', items: { type: 'object' } },
-          failedBookings: { type: 'array', items: { type: 'object' } },
-        },
+      upcoming: {
+        type: 'boolean',
+        description: 'Filter to show only upcoming bookings. Defaults to true.',
+        default: true,
       },
     },
-    required: ['success', 'message', 'details'],
   },
 };
 
 // --- Main Server Class ---
 export class DeskbirdMcpServer {
   private readonly mcpServer: Server;
-  private readonly tools: Tool[] = [BOOK_DESK_TOOL];
+  private readonly tools: Tool[] = [BOOK_DESK_TOOL, GET_USER_BOOKINGS_TOOL];
 
   constructor() {
     this.mcpServer = new Server(
@@ -111,6 +119,8 @@ export class DeskbirdMcpServer {
         );
         if (request.params.name === BOOK_DESK_TOOL.name) {
           return this.handleBookDesk(request, extra);
+        } else if (request.params.name === GET_USER_BOOKINGS_TOOL.name) {
+          return this.handleGetUserBookings(request, extra);
         } else {
           console.error(`Unknown tool requested: ${request.params.name}`);
           return {
@@ -132,7 +142,7 @@ export class DeskbirdMcpServer {
   private async handleBookDesk(
     request: CallToolRequest,
     extra: RequestHandlerExtra<CallToolRequest, any>
-  ): Promise<{ content: TextContent[]; isError?: boolean }> {
+  ): Promise<CallToolResult> {
     console.log("Executing tool 'deskbird_book_desk'");
 
     try {
@@ -147,32 +157,26 @@ export class DeskbirdMcpServer {
       }
 
       // 2. Extract and validate parameters
-      const params = request.params.arguments as {
-        date: string;
-        resource_id?: string;
-        workspace_id?: string;
-        zone_item_id?: number;
-      };
+      const params = request.params.arguments as unknown as BookDeskParams;
 
       if (!params.date) {
         throw new Error("Missing required parameter: 'date'");
       }
 
-      // 3. Merge tool inputs with environment fallbacks
-      const resourceId = params.resource_id || process.env.DESKBIRD_RESOURCE_ID;
-      const workspaceId =
-        params.workspace_id || process.env.DESKBIRD_WORKSPACE_ID;
-      const zoneItemIdStr =
-        params.zone_item_id?.toString() || process.env.DESKBIRD_ZONE_ITEM_ID;
-
-      if (!resourceId || !workspaceId || !zoneItemIdStr) {
-        throw new Error(
-          'Desk booking details (resourceId, workspaceId, zoneItemId) must be provided either in the tool call or as environment variables.'
-        );
+      if (!params.desk_id) {
+        throw new Error("Missing required parameter: 'desk_id'");
       }
-      const zoneItemId = parseInt(zoneItemIdStr, 10);
 
-      // 4. Get a fresh access token
+      // 3. Get required values from environment variables
+      const resourceId = process.env.DESKBIRD_RESOURCE_ID;
+      const workspaceId = process.env.DESKBIRD_WORKSPACE_ID;
+      const zoneItemId = params.desk_id;
+
+      if (!resourceId || !workspaceId) {
+        throw new Error(
+          'Environment variables DESKBIRD_RESOURCE_ID and DESKBIRD_WORKSPACE_ID must be set.'
+        );
+      }      // 4. Get a fresh access token
       const accessToken = await this._getNewAccessToken(
         refreshToken,
         googleApiKey
@@ -195,7 +199,10 @@ export class DeskbirdMcpServer {
           details: { successfulBookings: [], failedBookings: [] },
         };
         return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          content: [{
+            type: 'text',
+            text: 'Booking date falls on a weekend. No action taken.'
+          }],
         };
       }
 
@@ -234,10 +241,82 @@ export class DeskbirdMcpServer {
       };
 
       return {
-        content: [{ type: 'text', text: JSON.stringify(finalResult, null, 2) }],
+        content: [{
+          type: 'text',
+          text: `Desk booking completed successfully! ${message}\n\nDetails:\n${JSON.stringify(finalResult, null, 2)}`
+        }],
       };
     } catch (error) {
       console.error('Error in handleBookDesk:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unknown error occurred.';
+      return {
+        content: [{ type: 'text', text: `Error: ${errorMessage}` }],
+        isError: true,
+      };
+    }
+  }
+
+  private async handleGetUserBookings(
+    request: CallToolRequest,
+    extra: RequestHandlerExtra<CallToolRequest, any>
+  ): Promise<CallToolResult> {
+    console.log("Executing tool 'deskbird_get_user_bookings'");
+
+    try {
+      // 1. Validate environment variables
+      const refreshToken = process.env.REFRESH_TOKEN;
+      const googleApiKey = process.env.GOOGLE_API_KEY;
+
+      if (!refreshToken || !googleApiKey) {
+        throw new Error(
+          'Server-side configuration error: REFRESH_TOKEN or GOOGLE_API_KEY is not set.'
+        );
+      }
+
+      // 2. Extract and validate parameters
+      const params = request.params.arguments as unknown as GetUserBookingsParams;
+
+      // 3. Set defaults for optional parameters
+      const skip = params.skip ?? 0;
+      const limit = params.limit ?? 10;
+      const includeInstances = params.include_instances ?? true;
+      const upcoming = params.upcoming ?? true;
+
+      // 4. Get a fresh access token
+      const accessToken = await this._getNewAccessToken(
+        refreshToken,
+        googleApiKey
+      );
+
+      // 5. Execute the API call
+      const responseData = await this._getUserBookingsApiCall(
+        { skip, limit, includeInstances, upcoming },
+        accessToken
+      );
+
+      // 6. Format and return the response
+      const result = {
+        success: responseData.success || true,
+        message: `Retrieved ${responseData.currentCount || 0} bookings (${responseData.totalCount || 0} total available).`,
+        pagination: {
+          totalCount: responseData.totalCount,
+          currentCount: responseData.currentCount,
+          maximumCountPerPage: responseData.maximumCountPerPage,
+          next: responseData.next,
+          previous: responseData.previous,
+        },
+        bookings: responseData.results || [],
+      };
+
+      return {
+        content: [{
+          type: 'text',
+          text: `Retrieved ${responseData.currentCount || 0} bookings (${responseData.totalCount || 0} total available).\n\nBookings Summary:\n${JSON.stringify(result, null, 2)}`
+        }],
+      };
+    } catch (error) {
+      console.error('Error in handleGetUserBookings:', error);
       const errorMessage =
         error instanceof Error ? error.message : 'An unknown error occurred.';
       return {
@@ -274,9 +353,9 @@ export class DeskbirdMcpServer {
   }
 
   private async _createBookingApiCall(
-    data: any,
+    data: CreateBookingRequest,
     accessToken: string
-  ): Promise<any> {
+  ): Promise<CreateBookingResponse> {
     const response = await fetch(`${DESKBIRD_API_BASE_URL}/bookings`, {
       method: 'POST',
       headers: {
@@ -285,6 +364,42 @@ export class DeskbirdMcpServer {
       },
       body: JSON.stringify(data),
     });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error('Deskbird API Error:', errorBody);
+      throw new Error(`Deskbird API error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  private async _getUserBookingsApiCall(
+    queryParams: {
+      skip: number;
+      limit: number;
+      includeInstances: boolean;
+      upcoming: boolean;
+    },
+    accessToken: string
+  ): Promise<BookingsListResponse> {
+    const params = new URLSearchParams({
+      skip: queryParams.skip.toString(),
+      limit: queryParams.limit.toString(),
+      includeInstances: queryParams.includeInstances.toString(),
+      upcoming: queryParams.upcoming.toString(),
+    });
+
+    const response = await fetch(
+      `${DESKBIRD_API_BASE_URL}/user/bookings?${params}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
     if (!response.ok) {
       const errorBody = await response.text();
