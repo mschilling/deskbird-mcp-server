@@ -147,7 +147,15 @@ const GET_AVAILABLE_DESKS_TOOL = {
 // --- Main Server Class ---
 export class DeskbirdMcpServer {
   private readonly mcpServer: Server;
-  private readonly tools: Tool[] = [BOOK_DESK_TOOL, GET_USER_BOOKINGS_TOOL, FAVORITE_DESK_TOOL, UNFAVORITE_DESK_TOOL, GET_USER_FAVORITES_TOOL, GET_USER_INFO_TOOL, GET_AVAILABLE_DESKS_TOOL];
+  private readonly tools: Tool[] = [
+    BOOK_DESK_TOOL,
+    GET_USER_BOOKINGS_TOOL,
+    FAVORITE_DESK_TOOL,
+    UNFAVORITE_DESK_TOOL,
+    GET_USER_FAVORITES_TOOL,
+    GET_USER_INFO_TOOL,
+    GET_AVAILABLE_DESKS_TOOL,
+  ];
 
   constructor() {
     this.mcpServer = new Server(
