@@ -412,7 +412,7 @@ export interface UserData {
   createdAt: number;
   updatedAt: number;
   isUsingSystemLanguage: boolean;
-  dedicatedResources: any[];
+  dedicatedResources: DedicatedResource[];
   initialDeviceLanguage: string;
   language: string;
   uuid: string;
