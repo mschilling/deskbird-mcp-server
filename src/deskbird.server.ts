@@ -782,8 +782,16 @@ export class DeskbirdMcpServer {
       }
 
       const floorConfig = JSON.parse(floorConfigData.data.floorConfig);
-      const allDesks: any[] = [];
+      interface Desk {
+        id: string;
+        title: string;
+        deskNumber: number | null;
+        zoneId: string;
+        areaName: string;
+        status: string;
+      }
 
+      const allDesks: Desk[] = [];
       // Collect all desks from all areas
       for (const area of floorConfig.areas || []) {
         if (area.desks && Array.isArray(area.desks)) {
