@@ -426,7 +426,7 @@ export interface UserData {
   allowPasswordReset: boolean;
   accessibleOfficeIds: string[];
   officeIds: string[];
-  managedGroups: any[];
+  managedGroups: ManagedGroup[];
   officeRoles: any[];
 }
 
