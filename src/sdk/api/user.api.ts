@@ -4,6 +4,46 @@ import { handleDeskbirdException } from '../utils/error-handler.js';
 import type { HttpClient } from '../utils/http-client.js';
 
 /**
+ * User search result type (from API response)
+ */
+export interface UserSearchResult {
+  id: string;
+  uuid: string;
+  companyId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  primaryOfficeId: string;
+  avatarColor?: string;
+  profileImage?: string;
+}
+
+/**
+ * User search response type (from API)
+ */
+export interface UserSearchResponse {
+  data: UserSearchResult[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
+/**
+ * Detailed user information type (from individual user API)
+ */
+export interface UserDetails {
+  id: string;
+  uuid: string;
+  companyId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  primaryOfficeId: string;
+  avatarColor?: string;
+  profileImage?: string;
+}
+
+/**
  * User API client for user-related operations
  */
 export class UserApi {
@@ -128,6 +168,71 @@ export class UserApi {
       };
     } catch (error: unknown) {
       handleDeskbirdException(error, 'getUserProfile');
+    }
+  }
+
+  /**
+   * Search for users in the company
+   */
+  async searchUsers(params: {
+    searchQuery: string;
+    companyId: number;
+    offset?: number;
+    limit?: number;
+    sortField?: string;
+    sortOrder?: 'ASC' | 'DESC';
+    excludeUserIds?: string;
+  }): Promise<UserSearchResponse> {
+    console.log('[User API] Searching users with query:', params.searchQuery);
+    
+    try {
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+      queryParams.append('searchQuery', params.searchQuery);
+      queryParams.append('companyId', params.companyId.toString());
+      queryParams.append('offset', (params.offset || 0).toString());
+      queryParams.append('limit', (params.limit || 30).toString());
+      queryParams.append('sortField', params.sortField || 'userName');
+      queryParams.append('sortOrder', params.sortOrder || 'ASC');
+      
+      if (params.excludeUserIds) {
+        queryParams.append('excludeUserIds', params.excludeUserIds);
+      }
+
+      // Build the full path with query parameters
+      const basePath = getVersionedEndpoint('USER_SEARCH', '/users');
+      const fullPath = `${basePath}?${queryParams.toString()}`;
+
+      const response = await this.client.get<UserSearchResponse>(fullPath);
+      
+      if (!response.success) {
+        throw new Error(`Failed to search users: ${response.status} ${response.statusText}`);
+      }
+      
+      return response.data || { data: [], total: 0, offset: 0, limit: 0 };
+    } catch (error: unknown) {
+      handleDeskbirdException(error, 'searchUsers');
+    }
+  }
+
+  /**
+   * Get detailed user information by user ID
+   */
+  async getUserById(userId: string): Promise<UserDetails> {
+    console.log('[User API] Getting user details for ID:', userId);
+    
+    try {
+      const response = await this.client.get<UserDetails>(
+        getVersionedEndpoint('USER_DETAILS', `/users/${userId}`)
+      );
+      
+      if (!response.success || !response.data) {
+        throw new Error(`Failed to get user details: ${response.status} ${response.statusText}`);
+      }
+      
+      return response.data;
+    } catch (error: unknown) {
+      handleDeskbirdException(error, 'getUserById');
     }
   }
 }

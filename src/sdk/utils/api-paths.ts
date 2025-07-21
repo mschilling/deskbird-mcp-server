@@ -49,6 +49,8 @@ export const ENDPOINT_VERSIONS = {
   // User endpoints
   USER_PROFILE: API_VERSIONS.V1_1,
   USER_PREFERENCES: API_VERSIONS.V1_1,
+  USER_SEARCH: API_VERSIONS.V3,
+  USER_DETAILS: API_VERSIONS.V3,
   
   // Workspace endpoints - these could use v3 for newer features
   WORKSPACES_INTERNAL: API_VERSIONS.V1_1, // Currently using v1.1, can change to V3 if needed
