@@ -427,7 +427,12 @@ export interface UserData {
   accessibleOfficeIds: string[];
   officeIds: string[];
   managedGroups: ManagedGroup[];
-  officeRoles: any[];
+export interface OfficeRole {
+  id: string;
+  name: string;
+  permissions: string[];
+}
+  officeRoles: OfficeRole[];
 }
 
 export interface UserResponse {
