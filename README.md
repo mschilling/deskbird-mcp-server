@@ -180,6 +180,12 @@ Execute any HTTP request to the Deskbird API with full control over path, method
 - Valid Deskbird account and API credentials
 - Google API key for token refresh
 
+## Deskbird SDK (For Developers)
+
+The Deskbird SDK is a standalone TypeScript library designed for direct integration with the Deskbird API. It provides a clean, type-safe, and extensible architecture with features like automatic token refresh, comprehensive error handling, and date utilities.
+
+If you are a developer looking to integrate with the Deskbird API directly in your application, you can find detailed documentation, installation instructions, and API references in the [SDK's dedicated README file](src/sdk/README.md).
+
 ## License
 
 ISC License - see [LICENSE](LICENSE) file for details.
