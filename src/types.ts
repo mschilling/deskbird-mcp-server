@@ -427,12 +427,31 @@ export interface UserData {
   accessibleOfficeIds: string[];
   officeIds: string[];
   managedGroups: ManagedGroup[];
+  officeRoles: OfficeRole[];
+}
+
 export interface OfficeRole {
   id: string;
   name: string;
   permissions: string[];
 }
-  officeRoles: OfficeRole[];
+
+export interface FavoriteDesk {
+  id: string;
+  name: string;
+  [key: string]: any;
+}
+
+export interface DedicatedResource {
+  id: string;
+  name: string;
+  [key: string]: any;
+}
+
+export interface ManagedGroup {
+  id: string;
+  name: string;
+  [key: string]: any;
 }
 
 export interface UserResponse {
