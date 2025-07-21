@@ -1,6 +1,6 @@
 # Deskbird SDK
 
-A TypeScript SDK for interacting with the Deskbird API, designed with a clean and extensible architecture similar to enterprise-grade SDKs.
+A TypeScript SDK for interacting with the Deskbird API, designed for third-party consumers with a clean and extensible architecture.
 
 ## Features
 
@@ -9,7 +9,7 @@ A TypeScript SDK for interacting with the Deskbird API, designed with a clean an
 - 🛡️ **Error Handling**: Comprehensive error handling with business exception support
 - 📅 **Date Utilities**: Built-in date validation and timezone handling
 - 🔧 **TypeScript Support**: Full type safety with comprehensive interfaces
-- 🎯 **Environment Support**: Production and development environment configurations
+- 🎯 **Production Ready**: Optimized for third-party API consumers
 - 📦 **Factory Pattern**: Easy client creation with sensible defaults
 
 ## Installation
@@ -27,9 +27,8 @@ import { createDeskbirdClient } from './sdk';
 ```typescript
 import { createDeskbirdClient } from './sdk';
 
-// Create the client
+// Create the client (production API only)
 const client = createDeskbirdClient({
-  environment: 'production', // or 'development'
   refreshToken: 'your-refresh-token',
   googleApiKey: 'your-google-api-key',
   defaultWorkspaceId: 'workspace-123', // optional
@@ -45,7 +44,6 @@ await client.initialize();
 ```typescript
 // Using environment variables
 const client = createDeskbirdClient({
-  environment: process.env.NODE_ENV === 'production' ? 'production' : 'development',
   refreshToken: process.env.REFRESH_TOKEN!,
   googleApiKey: process.env.GOOGLE_API_KEY!,
   defaultWorkspaceId: process.env.DESKBIRD_WORKSPACE_ID,

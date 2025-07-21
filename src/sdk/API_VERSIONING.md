@@ -12,7 +12,6 @@ Different endpoints in the Deskbird API may use different versions. The SDK now 
 import { createDeskbirdClient, buildVersionedPath, API_VERSIONS } from './sdk';
 
 const client = createDeskbirdClient({
-  environment: 'production',
   refreshToken: process.env.REFRESH_TOKEN!,
   googleApiKey: process.env.GOOGLE_API_KEY!,
 });

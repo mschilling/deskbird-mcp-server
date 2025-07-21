@@ -1,5 +1,5 @@
 import type { DeskbirdSdkConfig } from './config/types.js';
-import { DESKBIRD_BASE_URLS, DEFAULT_API_CONFIG } from './config/environments.js';
+import { DESKBIRD_API_CONFIG, GOOGLE_TOKEN_API_CONFIG } from './config/api-config.js';
 import { HttpClient } from './utils/http-client.js';
 import { buildVersionedPath, API_VERSIONS } from './utils/api-paths.js';
 import { AuthApi } from './api/auth.api.js';
@@ -29,17 +29,14 @@ export class DeskbirdSdk {
 
   constructor(config: DeskbirdSdkConfig) {
     this.config = {
-      apiVersion: DEFAULT_API_CONFIG.version,
-      timeout: DEFAULT_API_CONFIG.timeout,
+      apiVersion: DESKBIRD_API_CONFIG.version,
+      timeout: DESKBIRD_API_CONFIG.timeout,
       enableRequestLogging: false,
       ...config,
     };
 
-    // Get base URL for the environment (without version)
-    const baseUrl = DESKBIRD_BASE_URLS[config.environment];
-
-    // Initialize HTTP client with base URL only
-    this.httpClient = new HttpClient(baseUrl, {
+    // Initialize HTTP client with Deskbird API base URL
+    this.httpClient = new HttpClient(DESKBIRD_API_CONFIG.baseUrl, {
       'Content-Type': 'application/json',
       ...config.baseHeaders,
     }, this.config.timeout);
@@ -53,7 +50,7 @@ export class DeskbirdSdk {
     this.favorites = new FavoritesApi(this.httpClient);
     this.workspaces = new WorkspacesApi(this.httpClient);
 
-    console.log(`[Deskbird SDK] Initialized for environment: ${config.environment}`);
+    console.log(`[Deskbird SDK] Initialized for Deskbird API v${this.config.apiVersion}`);
   }
 
   /**

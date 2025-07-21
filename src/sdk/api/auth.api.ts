@@ -1,4 +1,4 @@
-import { GOOGLE_TOKEN_API_CONFIG } from '../config/environments.js';
+import { GOOGLE_TOKEN_API_CONFIG } from '../config/api-config.js';
 import type { TokenResponse } from '../types/auth.js';
 import { handleDeskbirdException } from '../utils/error-handler.js';
 import { HttpClient } from '../utils/http-client.js';

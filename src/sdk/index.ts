@@ -14,8 +14,6 @@ export type {
   BaseSdkConfig,
 } from './config/types.js';
 
-export type { Environment } from './config/environments.js';
-
 // API client exports
 export { AuthApi } from './api/auth.api.js';
 export { UserApi } from './api/user.api.js';
@@ -42,14 +40,13 @@ export * from './types/index.js';
 
 /**
  * Factory function to create a Deskbird SDK client
- * Similar to createOmniAdministrationClient from the reference implementation
+ * Simplified for third-party API consumers (production only)
  */
 export function createDeskbirdClient(config: CreateDeskbirdClientConfig): DeskbirdSdk {
-  console.log(`[Deskbird SDK] Creating client for environment: ${config.environment}`);
+  console.log('[Deskbird SDK] Creating client for Deskbird API');
   
   // Map the minimal config to the full SDK config
   const sdkConfig: DeskbirdSdkConfig = {
-    environment: config.environment,
     refreshToken: config.refreshToken,
     googleApiKey: config.googleApiKey,
     

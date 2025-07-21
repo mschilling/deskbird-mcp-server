@@ -10,7 +10,6 @@ import {
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { createDeskbirdClient, type DeskbirdSdk } from './sdk/index.js';
 import { DateUtils } from './sdk/utils/date-utils.js';
-import type { Environment } from './sdk/config/environments.js';
 import * as dotenvFlow from 'dotenv-flow';
 
 // Load environment variables
@@ -220,7 +219,6 @@ export class DeskbirdMcpServer {
 
     // Create SDK client
     this.deskbirdSdk = createDeskbirdClient({
-      environment: (process.env.NODE_ENV === 'production' ? 'production' : 'development') as Environment,
       refreshToken,
       googleApiKey,
       defaultWorkspaceId: process.env.DESKBIRD_WORKSPACE_ID,

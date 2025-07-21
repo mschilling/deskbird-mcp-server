@@ -1,8 +1,5 @@
-import type { Environment } from './environments.js';
-
 // Base SDK configuration interface
 export interface BaseSdkConfig {
-  environment: Environment;
   timeout?: number;
   apiVersion?: string;
   baseHeaders?: Record<string, string>;
@@ -26,7 +23,6 @@ export interface DeskbirdSdkConfig extends BaseSdkConfig {
 
 // Factory function configuration (minimal required)
 export interface CreateDeskbirdClientConfig {
-  environment: Environment;
   refreshToken: string;
   googleApiKey: string;
   
