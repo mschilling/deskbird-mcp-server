@@ -407,7 +407,7 @@ export interface UserData {
   primaryOfficeId: string;
   favourites: string[];
   demoUser: boolean;
-  favoriteDesks: any[];
+  favoriteDesks: FavoriteDesk[];
   roleLastChangedBy: string;
   createdAt: number;
   updatedAt: number;
