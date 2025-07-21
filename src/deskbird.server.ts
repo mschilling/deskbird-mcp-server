@@ -15,6 +15,8 @@ import {
   BookingsListResponse,
   CreateBookingRequest,
   CreateBookingResponse,
+  DeskbirdApiCallParams,
+  DeskbirdApiCallResponse,
   FavoriteDeskParams,
   FavoriteResourceResponse,
   GetUserBookingsParams,
@@ -144,6 +146,50 @@ const GET_AVAILABLE_DESKS_TOOL = {
   },
 };
 
+// --- Tool Definition for generic API calls ---
+const DESKBIRD_API_CALL_TOOL: Tool = {
+  name: 'deskbird_api_call',
+  description: '⚠️ PREVIEW TOOL: Execute any HTTP request to the Deskbird API with full control over path, method, headers, and body. This tool provides direct access to the Deskbird API for advanced users and debugging. Use with caution and ensure you understand the API structure. Examples: GET /user, POST /bookings, PATCH /user/favoriteResource.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      method: {
+        type: 'string',
+        enum: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+        description: 'HTTP method for the API call',
+      },
+      path: {
+        type: 'string',
+        description: 'API endpoint path (without base URL). Examples: "/user", "/bookings", "/user/favoriteResource", "/company/internalWorkspaces"',
+      },
+      api_version: {
+        type: 'string',
+        description: 'API version to use (optional). Defaults to "v1.1". Examples: "v1.1", "v3". Some endpoints require specific versions.',
+        default: 'v1.1'
+      },
+      body: {
+        type: 'object',
+        description: 'Request body for POST/PUT/PATCH requests (optional for GET/DELETE). Must be a valid JSON object.',
+      },
+      query_params: {
+        type: 'object',
+        additionalProperties: {
+          type: ['string', 'number', 'boolean']
+        },
+        description: 'URL query parameters as key-value pairs (optional). Example: {"skip": 0, "limit": 10}',
+      },
+      headers: {
+        type: 'object',
+        additionalProperties: {
+          type: 'string'
+        },
+        description: 'Additional HTTP headers (optional). Authorization header is automatically added. Example: {"Content-Type": "application/json"}',
+      }
+    },
+    required: ['method', 'path']
+  }
+};
+
 // --- Main Server Class ---
 export class DeskbirdMcpServer {
   private readonly mcpServer: Server;
@@ -155,6 +201,7 @@ export class DeskbirdMcpServer {
     GET_USER_FAVORITES_TOOL,
     GET_USER_INFO_TOOL,
     GET_AVAILABLE_DESKS_TOOL,
+    DESKBIRD_API_CALL_TOOL,
   ];
 
   constructor() {
@@ -203,6 +250,8 @@ export class DeskbirdMcpServer {
           return this.handleGetUserInfo(request, extra);
         } else if (request.params.name === GET_AVAILABLE_DESKS_TOOL.name) {
           return this.handleGetAvailableDesks(request, extra);
+        } else if (request.params.name === DESKBIRD_API_CALL_TOOL.name) {
+          return this.handleDeskbirdApiCall(request, extra);
         } else {
           console.error(`Unknown tool requested: ${request.params.name}`);
           return {
@@ -847,7 +896,194 @@ export class DeskbirdMcpServer {
     }
   }
 
+  private async handleDeskbirdApiCall(
+    request: CallToolRequest,
+    extra: RequestHandlerExtra<CallToolRequest, any>
+  ): Promise<CallToolResult> {
+    console.log("Executing tool 'deskbird_api_call'");
+
+    try {
+      // 1. Validate environment variables
+      const refreshToken = process.env.REFRESH_TOKEN;
+      const googleApiKey = process.env.GOOGLE_API_KEY;
+
+      if (!refreshToken || !googleApiKey) {
+        throw new Error(
+          'Server-side configuration error: REFRESH_TOKEN or GOOGLE_API_KEY is not set.'
+        );
+      }
+
+      // 2. Extract and validate parameters
+      const params = request.params.arguments as unknown as DeskbirdApiCallParams;
+
+      if (!params.method) {
+        throw new Error("Missing required parameter: 'method'");
+      }
+
+      if (!params.path) {
+        throw new Error("Missing required parameter: 'path'");
+      }
+
+      // 3. Validate path format (security check)
+      if (params.path.startsWith('http://') || params.path.startsWith('https://')) {
+        throw new Error("Path must be relative (e.g., '/user'), not an absolute URL");
+      }
+
+      if (!params.path.startsWith('/')) {
+        params.path = '/' + params.path;
+      }
+
+      // 4. Get a fresh access token
+      const accessToken = await this._getNewAccessToken(
+        refreshToken,
+        googleApiKey
+      );
+
+      // 5. Execute the generic API call
+      const responseData = await this._genericDeskbirdApiCall(
+        params.method,
+        params.path,
+        accessToken,
+        params.api_version || 'v1.1',
+        params.body,
+        params.query_params,
+        params.headers
+      );
+
+      // 6. Format and return the response
+      const result = {
+        success: responseData.success,
+        message: `${params.method} ${params.api_version || 'v1.1'}${params.path} completed with status ${responseData.status} ${responseData.statusText}`,
+        response: responseData,
+      };
+
+      const statusEmoji = responseData.success ? '✅' : '❌';
+      const formattedResponse = `${statusEmoji} **API Call Completed**\n\n**Request:** ${params.method} ${params.api_version || 'v1.1'}${params.path}\n**Status:** ${responseData.status} ${responseData.statusText}\n**Timestamp:** ${responseData.requestInfo.timestamp}\n\n**Response Data:**\n${JSON.stringify(responseData.data, null, 2)}\n\n**Full Response Details:**\n${JSON.stringify(result, null, 2)}`;
+
+      return {
+        content: [{
+          type: 'text',
+          text: formattedResponse
+        }],
+        isError: !responseData.success,
+      };
+    } catch (error) {
+      console.error('Error in handleDeskbirdApiCall:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unknown error occurred.';
+      return {
+        content: [{ type: 'text', text: `❌ **API Call Failed**\n\nError: ${errorMessage}` }],
+        isError: true,
+      };
+    }
+  }
+
   // --- Private Helper Methods (from original project) ---
+
+  private async _genericDeskbirdApiCall(
+    method: string,
+    path: string,
+    accessToken: string,
+    apiVersion: string = 'v1.1',
+    body?: any,
+    queryParams?: Record<string, any>,
+    additionalHeaders?: Record<string, string>
+  ): Promise<DeskbirdApiCallResponse> {
+    // Build the full URL with configurable API version
+    let url = `https://api.deskbird.com/${apiVersion}${path}`;
+    
+    // Add query parameters if provided
+    if (queryParams && Object.keys(queryParams).length > 0) {
+      const params = new URLSearchParams();
+      for (const [key, value] of Object.entries(queryParams)) {
+        params.append(key, String(value));
+      }
+      url += `?${params.toString()}`;
+    }
+
+    // Prepare headers
+    const headers: Record<string, string> = {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      ...additionalHeaders
+    };
+
+    // Prepare request options
+    const requestOptions: RequestInit = {
+      method: method.toUpperCase(),
+      headers,
+    };
+
+    // Add body for methods that support it
+    if (body && ['POST', 'PUT', 'PATCH'].includes(method.toUpperCase())) {
+      requestOptions.body = JSON.stringify(body);
+    }
+
+    const timestamp = new Date().toISOString();
+    
+    try {
+      console.log(`Making ${method.toUpperCase()} request to: ${url}`);
+      
+      const response = await fetch(url, requestOptions);
+      
+      // Extract response headers
+      const responseHeaders: Record<string, string> = {};
+      response.headers.forEach((value, key) => {
+        responseHeaders[key] = value;
+      });
+
+      // Try to parse response body
+      let responseData: any;
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType?.includes('application/json')) {
+        try {
+          responseData = await response.json();
+        } catch (parseError) {
+          responseData = { error: 'Failed to parse JSON response', raw: await response.text() };
+        }
+      } else {
+        responseData = { text: await response.text() };
+      }
+
+      const apiResponse: DeskbirdApiCallResponse = {
+        success: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+        data: responseData,
+        headers: responseHeaders,
+        requestInfo: {
+          method: method.toUpperCase(),
+          url: url,
+          timestamp: timestamp,
+        },
+      };
+
+      if (!response.ok) {
+        console.error(`Deskbird API Error (${response.status}):`, responseData);
+      }
+
+      return apiResponse;
+    } catch (fetchError) {
+      console.error('Network/Fetch Error:', fetchError);
+      
+      return {
+        success: false,
+        status: 0,
+        statusText: 'Network Error',
+        data: { 
+          error: fetchError instanceof Error ? fetchError.message : 'Unknown network error',
+          type: 'NetworkError'
+        },
+        headers: {},
+        requestInfo: {
+          method: method.toUpperCase(),
+          url: url,
+          timestamp: timestamp,
+        },
+      };
+    }
+  }
 
   private async _getNewAccessToken(
     refreshToken: string,

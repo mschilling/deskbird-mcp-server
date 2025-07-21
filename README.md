@@ -56,14 +56,113 @@ Books a desk at the office for a specific date.
 
 **Parameters:**
 - `date` (required): The date to book in YYYY-MM-DD format
-- `resource_id` (optional): Specific desk/resource ID
-- `workspace_id` (optional): Workspace ID
-- `zone_item_id` (optional): Zone item ID
+- `desk_id` (required): The ID of the specific desk (zone item ID) to book
 
 **Example:**
 ```json
 {
-  "date": "2025-07-18"
+  "date": "2025-07-18",
+  "desk_id": 123
+}
+```
+
+### `deskbird_get_user_bookings`
+
+Retrieves a list of the current user's desk bookings with optional filtering.
+
+**Parameters:**
+- `skip` (optional): Number of bookings to skip for pagination. Defaults to 0
+- `limit` (optional): Maximum number of bookings to return. Defaults to 10
+- `include_instances` (optional): Whether to include booking instances. Defaults to true
+- `upcoming` (optional): Filter to show only upcoming bookings. Defaults to true
+
+### `deskbird_favorite_desk`
+
+Adds a desk to the user's favorite desks list.
+
+**Parameters:**
+- `desk_id` (required): The desk number (e.g., 57 for Desk 57)
+
+### `deskbird_unfavorite_desk`
+
+Removes a desk from the user's favorite desks list.
+
+**Parameters:**
+- `desk_id` (required): The desk number (e.g., 57 for Desk 57)
+
+### `deskbird_get_user_favorites`
+
+Retrieves the user's current favorite desks list with desk details including names, locations, and IDs.
+
+### `deskbird_get_user_info`
+
+Retrieves the current user's profile information including name, office, settings, and account details.
+
+### `deskbird_get_available_desks`
+
+Retrieves a list of all available desks from the floor configuration. Shows both desk numbers (used for favoriting) and internal resource IDs.
+
+### `deskbird_api_call` ⚠️ PREVIEW TOOL
+
+Execute any HTTP request to the Deskbird API with full control over path, method, headers, and body. This tool provides direct access to the Deskbird API for advanced users and debugging.
+
+**⚠️ Security Considerations:**
+- This tool provides unrestricted access to the Deskbird API
+- Use only if you understand the API structure and potential consequences
+- Be mindful of API rate limits
+- Validate all inputs before execution
+
+**Parameters:**
+- `method` (required): HTTP method - one of: GET, POST, PUT, PATCH, DELETE
+- `path` (required): API endpoint path without base URL (e.g., "/user", "/bookings")
+- `api_version` (optional): API version to use. Defaults to "v1.1". Examples: "v1.1", "v3"
+- `body` (optional): Request body for POST/PUT/PATCH requests
+- `query_params` (optional): URL query parameters as key-value pairs
+- `headers` (optional): Additional HTTP headers (Authorization is automatically added)
+
+**Examples:**
+```json
+{
+  "method": "GET",
+  "path": "/user"
+}
+```
+
+```json
+{
+  "method": "GET",
+  "path": "/user/bookings",
+  "query_params": {
+    "limit": 5,
+    "upcoming": true
+  }
+}
+```
+
+```json
+{
+  "method": "GET",
+  "path": "/some-endpoint",
+  "api_version": "v3"
+}
+```
+
+```json
+{
+  "method": "POST",
+  "path": "/bookings",
+  "body": {
+    "bookings": [
+      {
+        "bookingStartTime": 1656576000000,
+        "bookingEndTime": 1656608400000,
+        "isAnonymous": false,
+        "resourceId": "abc123",
+        "zoneItemId": 456,
+        "workspaceId": "workspace123"
+      }
+    ]
+  }
 }
 ```
 

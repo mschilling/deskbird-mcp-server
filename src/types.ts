@@ -518,3 +518,26 @@ export interface GetUserBookingsResult extends ToolResult {
   pagination: PaginationInfo;
   bookings: Booking[];
 }
+
+// New types for generic API call tool
+export interface DeskbirdApiCallParams {
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  path: string;
+  api_version?: string;
+  body?: Record<string, any>;
+  query_params?: Record<string, string | number | boolean>;
+  headers?: Record<string, string>;
+}
+
+export interface DeskbirdApiCallResponse {
+  success: boolean;
+  status: number;
+  statusText: string;
+  data: any;
+  headers: Record<string, string>;
+  requestInfo: {
+    method: string;
+    url: string;
+    timestamp: string;
+  };
+}
