@@ -1122,10 +1122,8 @@ export class DeskbirdMcpServer {
       }
     }
 
-    // Strategy 4: Fallback to the known working group ID
     if (!groupId) {
-      groupId = '18507';
-      console.warn('Using fallback group ID 18507');
+      throw new Error('Could not determine a group ID for floor configuration.');
     }
 
     console.log(`Using group ID: ${groupId} for floor config`);
