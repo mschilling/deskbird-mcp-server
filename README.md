@@ -102,6 +102,41 @@ Retrieves the current user's profile information including name, office, setting
 
 Retrieves a list of all available desks from the floor configuration. Shows both desk numbers (used for favoriting) and internal resource IDs.
 
+### `deskbird_search_users`
+
+Search for users within the company by name, email, or other criteria.
+
+**Parameters:**
+- `search_query` (required): Search query to find users (searches names, emails, etc.)
+- `limit` (optional): Maximum number of results to return. Defaults to 30
+- `offset` (optional): Number of results to skip for pagination. Defaults to 0
+- `company_id` (optional): Company ID to search within. Defaults to 2927
+- `exclude_user_ids` (optional): Comma-separated list of user IDs to exclude from results
+- `sort_field` (optional): Field to sort by. Defaults to "userName"
+- `sort_order` (optional): Sort order ("ASC" or "DESC"). Defaults to "ASC"
+
+**Example:**
+```json
+{
+  "search_query": "cas",
+  "limit": 10
+}
+```
+
+### `deskbird_get_user_details`
+
+Get detailed information about a specific user by their user ID.
+
+**Parameters:**
+- `user_id` (required): The ID of the user to retrieve details for
+
+**Example:**
+```json
+{
+  "user_id": "12345"
+}
+```
+
 ### `deskbird_api_call` ⚠️ PREVIEW TOOL
 
 Execute any HTTP request to the Deskbird API with full control over path, method, headers, and body. This tool provides direct access to the Deskbird API for advanced users and debugging.
