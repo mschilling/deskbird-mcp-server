@@ -130,16 +130,36 @@ jobs:
           git push origin ${{ steps.version.outputs.new-version }}
 
       - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.new-version }}
-          release_name: Release ${{ steps.version.outputs.new-version }}
+          name: Release ${{ steps.version.outputs.new-version }}
           draft: false
           prerelease: false
+          body: |
+            ## Changes in ${{ steps.version.outputs.new-version }}
+
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for detailed changes.
+
+            ## Installation
+
+            ```bash
+            npm install -g @mschilling/deskbird-mcp-server
+            ```
+
+            ## Quick Setup
+
+            ```bash
+            npm run setup
+            ```
+          generate_release_notes: true
 
       - name: Publish to GitHub Packages
-        run: npm publish
+        run: |
+          echo "Publishing package to GitHub Packages..."
+          echo "Registry: https://npm.pkg.github.com"
+          echo "Package: @mschilling/deskbird-mcp-server@$(node -p "require('./package.json').version")"
+          npm publish --verbose
+          echo "✅ Package published successfully!"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
