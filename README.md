@@ -11,11 +11,37 @@ A Model Context Protocol (MCP) server for Deskbird desk booking integration. Thi
 
 ## Installation
 
+### From GitHub Packages
+
 ```bash
+npm install -g @mschilling/deskbird-mcp-server
+```
+
+### From Source
+
+```bash
+git clone https://github.com/mschilling/deskbird-mcp-server.git
+cd deskbird-mcp-server
 npm install
+npm run build
 ```
 
 ## Configuration
+
+### Quick Setup
+
+After installation, run the setup helper to generate configuration files:
+
+```bash
+npm run setup
+```
+
+This will create:
+- `.env.example` - Environment configuration template  
+- `claude_desktop_config.json` - Claude Desktop configuration
+- `vscode_mcp_config.json` - VS Code MCP configuration
+
+### Manual Configuration
 
 Copy the example environment file and configure it:
 
