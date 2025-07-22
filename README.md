@@ -31,7 +31,18 @@ GOOGLE_API_KEY=your_google_api_key
 DESKBIRD_RESOURCE_ID=your_resource_id
 DESKBIRD_ZONE_ITEM_ID=your_zone_item_id
 DESKBIRD_WORKSPACE_ID=your_workspace_id
+DEFAULT_COMPANY_ID=your_company_id  # Optional: If not set, will be auto-discovered from user profile
 ```
+
+### Dynamic Company ID Resolution
+
+The MCP server automatically handles company ID resolution in the following priority order:
+
+1. **Environment Variable**: If `DEFAULT_COMPANY_ID` is set in your environment file, it will be used
+2. **Auto-Discovery**: If no environment variable is set, the server will automatically discover your company ID from your user profile
+3. **Explicit Parameter**: Individual tool calls can still override the company ID by passing it explicitly
+
+This ensures the server works across different companies and environments without requiring hardcoded values.
 
 ## Usage
 
@@ -110,7 +121,7 @@ Search for users within the company by name, email, or other criteria.
 - `search_query` (required): Search query to find users (searches names, emails, etc.)
 - `limit` (optional): Maximum number of results to return. Defaults to 30
 - `offset` (optional): Number of results to skip for pagination. Defaults to 0
-- `company_id` (optional): Company ID to search within. Defaults to 2927
+- `company_id` (optional): Company ID to search within. If not specified, will be auto-discovered from your user profile or use DEFAULT_COMPANY_ID environment variable if set
 - `exclude_user_ids` (optional): Comma-separated list of user IDs to exclude from results
 - `sort_field` (optional): Field to sort by. Defaults to "userName"
 - `sort_order` (optional): Sort order ("ASC" or "DESC"). Defaults to "ASC"

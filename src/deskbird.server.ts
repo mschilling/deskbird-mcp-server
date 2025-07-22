@@ -1,8 +1,8 @@
 // Refactored Deskbird MCP Server using the new SDK
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { 
-  CallToolRequestSchema, 
-  ListToolsRequestSchema, 
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
   type CallToolRequest,
   type CallToolResult,
   type Tool
@@ -178,8 +178,7 @@ const SEARCH_USERS_TOOL: Tool = {
       },
       company_id: {
         type: 'number',
-        description: 'Company ID to search within. Defaults to 2927.',
-        default: 2927,
+        description: 'Company ID to search within. If not provided, will be automatically determined from the current user or environment configuration.',
       },
       offset: {
         type: 'number',
@@ -286,6 +285,7 @@ export class DeskbirdMcpServer {
       defaultWorkspaceId: process.env.DESKBIRD_WORKSPACE_ID,
       defaultResourceId: process.env.DESKBIRD_RESOURCE_ID,
       defaultGroupId: process.env.DESKBIRD_GROUP_ID,
+      defaultCompanyId: process.env.DEFAULT_COMPANY_ID,
       enableRequestLogging: process.env.NODE_ENV === 'development',
     });
 
@@ -309,7 +309,7 @@ export class DeskbirdMcpServer {
       CallToolRequestSchema,
       async (request) => {
         console.error(`Received CallToolRequest for tool: ${request.params.name}`);
-        
+
         if (request.params.name === BOOK_DESK_TOOL.name) {
           return this.handleBookDeskWithSdk(request);
         } else if (request.params.name === GET_USER_BOOKINGS_TOOL.name) {
@@ -527,7 +527,7 @@ export class DeskbirdMcpServer {
       // Get available desks to enhance favorites with desk numbers
       const allDesks = await sdk.getAvailableDesks();
       const deskMapping: Record<number, number> = {};
-      
+
       // Create mapping from zone ID to desk number
       allDesks.forEach(desk => {
         if (desk.zoneId && desk.deskNumber !== null) {
@@ -746,10 +746,10 @@ export class DeskbirdMcpServer {
         throw new Error("Missing required parameter: 'search_query'");
       }
 
-      // Use SDK's user search method
-      const responseData = await sdk.user.searchUsers({
+      // Use SDK's user search method with dynamic company ID
+      const responseData = await sdk.searchUsers({
         searchQuery: params.search_query,
-        companyId: params.company_id ?? 2927,
+        companyId: params.company_id, // Will be auto-discovered if not provided
         offset: params.offset ?? 0,
         limit: params.limit ?? 30,
         sortField: params.sort_field ?? 'userName',
