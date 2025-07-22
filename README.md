@@ -2,6 +2,19 @@
 
 A Model Context Protocol (MCP) server for Deskbird desk booking integration. This server enables AI assistants to book office desks through the Deskbird API.
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Configuration](#configuration) 
+- [Usage](#usage)
+- [Available Tools](#available-tools)
+- [How it Works](#how-it-works)
+- [Requirements](#requirements)
+- [Deskbird SDK (For Developers)](#deskbird-sdk-for-developers)
+- [API Endpoints Reference](#api-endpoints-reference)
+- [License](#license)
+
 ## Features
 
 - 📅 **Desk Booking**: Book office desks for specific dates with automatic date validation
