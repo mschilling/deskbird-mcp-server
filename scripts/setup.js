@@ -7,7 +7,7 @@
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -107,6 +107,8 @@ function showInstructions() {
 - Check the README.md for detailed setup instructions
 - Report issues: https://github.com/mschilling/deskbird-mcp-server/issues
 
+💡 Tip: You can run "npm run setup" anytime to regenerate these config files.
+
 Happy desk booking! 🏢✨
 `);
 }
@@ -128,6 +130,6 @@ async function setup() {
 }
 
 // Only run if this script is called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   setup();
 }

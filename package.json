@@ -19,8 +19,7 @@
     "watch": "tsc --watch",
     "test": "node scripts/test-installation.js",
     "test:install": "npm run build && npm run test",
-    "setup": "node scripts/setup.js",
-    "postinstall": "node scripts/setup.js"
+    "setup": "node scripts/setup.js"
   },
   "keywords": [
     "mcp",

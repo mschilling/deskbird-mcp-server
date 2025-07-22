@@ -106,6 +106,8 @@ After publishing, users can install your package:
 ### Global Installation:
 ```bash
 npm install -g @mschilling/deskbird-mcp-server
+# Then run setup to configure
+npm run setup  # or: deskbird-mcp-server --setup (if we add this flag)
 ```
 
 ### Using NPX:
@@ -116,6 +118,8 @@ npx @mschilling/deskbird-mcp-server
 ### As Dependency:
 ```bash
 npm install @mschilling/deskbird-mcp-server
+cd node_modules/@mschilling/deskbird-mcp-server
+npm run setup
 ```
 
 ## Verification
