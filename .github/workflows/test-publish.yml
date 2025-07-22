@@ -1,0 +1,48 @@
+name: Test Publish
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          registry-url: 'https://npm.pkg.github.com'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Test installation
+        run: npm test
+
+      - name: Test publish (dry run)
+        run: |
+          echo "Would publish: @mschilling/deskbird-mcp-server@$(node -p "require('./package.json').version")"
+          echo "Registry: https://npm.pkg.github.com"
+          echo "NODE_AUTH_TOKEN is set: ${{ env.NODE_AUTH_TOKEN != '' }}"
+          npm publish --dry-run --verbose
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check package.json configuration
+        run: |
+          echo "=== Package Configuration ==="
+          echo "Name: $(node -p "require('./package.json').name")"
+          echo "Version: $(node -p "require('./package.json').version")"
+          echo "Registry: $(node -p "require('./package.json').publishConfig?.registry || 'default'")"
+          echo "Files: $(node -p "JSON.stringify(require('./package.json').files)")"
