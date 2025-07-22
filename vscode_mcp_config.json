@@ -1,0 +1,13 @@
+{
+  "mcp": {
+    "servers": {
+      "deskbird": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@mschilling/deskbird-mcp-server"
+        ]
+      }
+    }
+  }
+}
