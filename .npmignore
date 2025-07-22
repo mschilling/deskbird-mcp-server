@@ -1,0 +1,54 @@
+# Development files
+src/
+.env
+.env.*
+.local/
+.vscode/
+scripts/
+
+# Build and test files
+*.tsbuildinfo
+coverage/
+__tests__/
+jest.config.js
+jest.config.cjs
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+
+# Documentation and development
+docs/
+*.md
+!README.md
+!LICENSE
+!CHANGELOG.md
+PUBLISHING.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# Development tools
+.editorconfig
+.eslintrc*
+.prettierrc*
+.prettierignore
+.gitignore
+.gitattributes
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Misc
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
