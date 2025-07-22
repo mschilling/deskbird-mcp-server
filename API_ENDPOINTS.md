@@ -153,9 +153,9 @@ For booking desks for external guests and visitors:
   "bookings": [
     {
       "guest": {
-        "firstName": "Michael",
-        "lastName": "Schilling", 
-        "email": "michael.schilling@framna.com"
+        "firstName": "John",
+        "lastName": "Doe", 
+        "email": "john.doe@example.com"
       },
       "bookingStartTime": 1753246800000,
       "bookingEndTime": 1753304400000,
@@ -212,7 +212,7 @@ Content-Type: application/json
 - **Request Body**: Empty JSON object `{}`
 
 **Usage Example:**
-- URL: `/bookings/23027462/cancel`
+- URL: `/bookings/123456/cancel`
 - Method: PATCH
 - Body: `{}`
 
@@ -258,7 +258,7 @@ PATCH /v1.1/bookings/{bookingId}
 Content-Type: application/json
 
 {
-  "bookingId": "23027656",
+  "bookingId": "123456",
   "bookingEndTime": 1753300800000
 }
 ```
@@ -279,7 +279,7 @@ Content-Type: application/json
 **Extend Booking End Time:**
 ```json
 {
-  "bookingId": "23027656",
+  "bookingId": "123456",
   "bookingEndTime": 1753300800000
 }
 ```
@@ -287,7 +287,7 @@ Content-Type: application/json
 **Change Both Start and End Times:**
 ```json
 {
-  "bookingId": "23027656", 
+  "bookingId": "123456", 
   "bookingStartTime": 1753243200000,
   "bookingEndTime": 1753300800000
 }
@@ -296,7 +296,7 @@ Content-Type: application/json
 **Move to Different Desk:**
 ```json
 {
-  "bookingId": "23027656",
+  "bookingId": "123456",
   "zoneItemId": 476810
 }
 ```
@@ -358,7 +358,7 @@ const user = await userApi.getCurrentUser();
 ### Search Users
 ```typescript
 const searchResults = await userApi.searchUsers({
-  searchQuery: "john",
+  searchQuery: "doe",
   companyId: 2927,
   limit: 20
 });
