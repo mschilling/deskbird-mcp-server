@@ -11,38 +11,56 @@ This document provides a comprehensive overview of all API endpoints implemented
 
 ## Endpoints Overview
 
-### GET Endpoints
+### User Management
 
-| Endpoint Path | HTTP Method | Query String Options | API Version | Comments/Description |
-|---------------|-------------|---------------------|-------------|---------------------|
+| Endpoint Path | HTTP Method | Query String Options / Request Body | API Version | Comments/Description |
+|---------------|-------------|-------------------------------------|-------------|---------------------|
 | `/user` | GET | None | v1.1 | Get current user profile information |
 | `/users` | GET | `searchQuery`, `companyId`, `offset`, `limit`, `sortField`, `sortOrder`, `excludeUserIds`, `followStatus` | v3 | Search for users in the company with follow system support |
 | `/users/{userId}` | GET | None | v3 | Get detailed user information by user ID |
+| `/user/corporateInfo` | GET | None | v1.4 | Comprehensive company information |
+
+### Booking Management
+
+| Endpoint Path | HTTP Method | Query String Options / Request Body | API Version | Comments/Description |
+|---------------|-------------|-------------------------------------|-------------|---------------------|
+| `/bookings` | POST | Booking request (regular or guest) | v1.1 | Create bookings for users or guests |
+| `/bookings/{bookingId}` | PATCH | Booking update object | v1.1 | Update booking details (times, etc.) |
+| `/bookings/{bookingId}/cancel` | PATCH | `{}` (empty object) | v1.1 | Cancel a booking by ID |
+| `/bookings/{bookingId}` | DELETE | None | v1.1 | Cancel a booking by ID |
+| `/user/bookings` | GET | `skip`, `limit`, `includeInstances`, `upcoming` | v1.1 | Get user's bookings with filtering |
+| `/user/bookings/{bookingId}` | GET | None | v1.1 | Get booking details by ID |
+
+### Workspace & Resources
+
+| Endpoint Path | HTTP Method | Query String Options / Request Body | API Version | Comments/Description |
+|---------------|-------------|-------------------------------------|-------------|---------------------|
 | `/user/favoriteResources` | GET | None | v1.1 | User's favorite resources/desks |
+| `/user/favoriteResource` | PATCH | `{id: zoneId}` | v1.1 | Add a desk to user's favorites |
+| `/user/favoriteResource/{zoneId}` | DELETE | None | v1.1 | Remove a desk from user's favorites |
+| `/company/internalWorkspaces` | GET | `companyId`, `includeInactive` | v1.1 | Get internal workspaces for a company |
+| `/company/internalWorkspaces/{workspaceId}/groups` | GET | None | v1.1 | Get groups for a workspace |
+| `/company/internalWorkspaces/{workspaceId}/groups/{groupId}/floorConfig` | GET | None | v1.1 | Get floor configuration for a workspace group |
+| `/internalWorkspaces/{workspaceId}/zones` | GET | `internal=true`, `startTime=timestamp` | v1.2 | Zone info including parking spaces |
 | `/user/bookings/{workspaceId}/spaces` | GET | `date`, `startTime`, `endTime` | v1.1 | Get detailed booking and space info for a workspace on a specific date/time |
+
+### Scheduling & Planning
+
+| Endpoint Path | HTTP Method | Query String Options / Request Body | API Version | Comments/Description |
+|---------------|-------------|-------------------------------------|-------------|---------------------|
 | `/scheduling/list` | GET | `startDate`, `numberOfDays` | v2 | Get scheduling overview for multiple days with office status, bookings, and team presence |
+
+### Company Administration
+
+| Endpoint Path | HTTP Method | Query String Options / Request Body | API Version | Comments/Description |
+|---------------|-------------|-------------------------------------|-------------|---------------------|
 | `/businesscompany/{companyId}` | GET | None | v1.1 | Get comprehensive business company information including settings, integrations, and policies |
 
-### POST Endpoints
+### Events & Miscellaneous
 
-| Endpoint Path | HTTP Method | Request Body | API Version | Comments/Description |
-|---------------|-------------|-------------|-------------|---------------------|
-| `/bookings` | POST | Booking request (regular or guest) | v1.1 | Create bookings for users or guests |
-
-### PATCH Endpoints
-
-| Endpoint Path | HTTP Method | Request Body | API Version | Comments/Description |
-|---------------|-------------|-------------|-------------|---------------------|
-| `/user/favoriteResource` | PATCH | `{id: zoneId}` | v1.1 | Add a desk to user's favorites |
-| `/bookings/{bookingId}/cancel` | PATCH | `{}` (empty object) | v1.1 | Cancel a booking by ID |
-| `/bookings/{bookingId}` | PATCH | Booking update object | v1.1 | Update booking details (times, etc.) |
-
-### DELETE Endpoints
-
-| Endpoint Path | HTTP Method | Request Body | API Version | Comments/Description |
-|---------------|-------------|-------------|-------------|---------------------|
-| `/user/favoriteResource/{zoneId}` | DELETE | None | v1.1 | Remove a desk from user's favorites |
-| `/bookings/{bookingId}` | DELETE | None | v1.1 | Cancel a booking by ID |
+| Endpoint Path | HTTP Method | Query String Options / Request Body | API Version | Comments/Description |
+|---------------|-------------|-------------------------------------|-------------|---------------------|
+| `/events` | GET | None | v1.1 | Returns events (empty array) |
 
 ## Authentication Endpoints (Google Token API)
 
@@ -50,9 +68,11 @@ This document provides a comprehensive overview of all API endpoints implemented
 |---------------|-------------|---------------------|-------------|---------------------|
 | `https://securetoken.googleapis.com/v1/token` | POST | `key` (API key) | v1 | Refresh OAuth access token using refresh token |
 
-## Query Parameters Details
+## Parameter Documentation by Feature
 
-### User Search (`/users`)
+### User Management Parameters
+
+#### User Search (`/users`)
 - `searchQuery` (string, optional): Search term for finding users
 - `companyId` (number, required): Company ID to search within
 - `offset` (number, optional): Number of results to skip (default: 0)
@@ -62,26 +82,32 @@ This document provides a comprehensive overview of all API endpoints implemented
 - `excludeUserIds` (string, optional): Comma-separated list of user IDs to exclude
 - `followStatus` (string, optional): Filter by follow relationship - "following", "notFollowing", or omit for all users
 
-### User Bookings (`/user/bookings`)
+### Booking Management Parameters
+
+#### User Bookings (`/user/bookings`)
 - `skip` (number, optional): Number of bookings to skip (default: 0)
 - `limit` (number, optional): Maximum bookings to return (default: 10)
 - `includeInstances` (boolean, optional): Include booking instances (default: true)
 - `upcoming` (boolean, optional): Filter to upcoming bookings only (default: true)
 
-### Internal Workspaces (`/company/internalWorkspaces`)
-- `companyId` (string, required): Company ID to get workspaces for
-- `includeInactive` (boolean, optional): Include inactive workspaces (default: false)
-
-### Internal Workspace Zones (`/internalWorkspaces/{workspaceId}/zones`)
-- `internal` (boolean, required): Set to true for internal workspace access
-- `startTime` (number, required): Timestamp for zone availability calculation
-
-### User Workspace Spaces (`/user/bookings/{workspaceId}/spaces`)
+#### User Workspace Spaces (`/user/bookings/{workspaceId}/spaces`)
 - `date` (string, required): Date in YYYY-MM-DD format for which to get space information
 - `startTime` (number, required): Unix timestamp in milliseconds for the start time
 - `endTime` (number, required): Unix timestamp in milliseconds for the end time
 
-### Scheduling List (`/scheduling/list`)
+### Workspace & Resources Parameters
+
+#### Internal Workspaces (`/company/internalWorkspaces`)
+- `companyId` (string, required): Company ID to get workspaces for
+- `includeInactive` (boolean, optional): Include inactive workspaces (default: false)
+
+#### Internal Workspace Zones (`/internalWorkspaces/{workspaceId}/zones`)
+- `internal` (boolean, required): Set to true for internal workspace access
+- `startTime` (number, required): Timestamp for zone availability calculation
+
+### Scheduling & Planning Parameters
+
+#### Scheduling List (`/scheduling/list`)
 - `startDate` (string, required): Start date in YYYY-MM-DD format for the scheduling period
 - `numberOfDays` (number, required): Number of days to retrieve scheduling information for (e.g., 21 for 3 weeks)
 
@@ -359,17 +385,11 @@ const desks = await workspacesApi.getAvailableDesks(workspaceId, groupId);
 
 ## Additional Implementation Notes
 
-The API provides comprehensive functionality for workspace management including:
+The API provides comprehensive functionality across several key feature areas:
 
-- **Zone Management**: The `/internalWorkspaces/{workspaceId}/zones` endpoint provides detailed zone information including availability, booking data, equipment, and access restrictions
-- **Workspace Space Details**: The `/user/bookings/{workspaceId}/spaces` endpoint provides comprehensive space information including current bookings, occupancy status, user details, and favorite status for a specific date/time range
-- **Scheduling & Planning**: The `/scheduling/list` endpoint offers multi-day scheduling overview with office status, team presence indicators, favorite colleagues, and booking summaries across multiple days
-- **Comprehensive Booking Management**: The `/bookings` POST endpoint supports both regular user bookings and guest bookings, enabling flexible workspace reservation and visitor management
-- **Booking Updates**: PATCH `/bookings/{bookingId}` allows modification of existing bookings including time changes, desk switches, and duration adjustments
-- **Booking Cancellation**: Multiple cancellation methods available via PATCH `/bookings/{bookingId}/cancel` or DELETE `/bookings/{bookingId}` for flexible booking management
-- **Business Company Management**: The `/businesscompany/{companyId}` endpoint provides complete business company configuration including login methods, integrations (HRIS, calendar), office roles, admin settings, and privacy policies
-- **Corporate Information**: The `/user/corporateInfo` endpoint offers complete company configuration including branding, scheduling options, integrations, and policies  
-- **Social Features**: The `/users` endpoint supports a sophisticated follow system with filtering capabilities and pagination
-- **Event System**: Basic event functionality is available through the `/events` endpoint
-
-These endpoints enable full-featured workspace management applications with social networking, comprehensive company administration, and detailed resource management capabilities.
+- **User Management**: Complete user profile management, search capabilities with social features (follow system), and corporate information access
+- **Booking Management**: Full booking lifecycle support including creation (regular and guest bookings), updates (time changes, desk switches), and cancellation (multiple methods)
+- **Workspace & Resources**: Physical space management including desk favorites, floor configurations, zone information, and detailed space availability
+- **Scheduling & Planning**: Advanced scheduling features with multi-day overviews, team presence indicators, and booking summaries
+- **Company Administration**: Business-level configuration including integrations (HRIS, calendar), office roles, privacy policies, and administrative settings
+- **Events & Data**: Event system integration and miscellaneous data endpoints
