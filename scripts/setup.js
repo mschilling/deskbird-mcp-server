@@ -114,13 +114,13 @@ Happy desk booking! 🏢✨
 async function setup() {
   try {
     console.log('🔧 Setting up Deskbird MCP Server...\n');
-    
+
     createEnvTemplate();
     generateClaudeConfig();
     generateVSCodeConfig();
-    
+
     showInstructions();
-    
+
   } catch (error) {
     console.error('❌ Setup failed:', error.message);
     process.exit(1);
