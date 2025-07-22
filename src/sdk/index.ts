@@ -24,10 +24,10 @@ export { WorkspacesApi } from './api/workspaces.api.js';
 // Utility exports
 export { HttpClient } from './utils/http-client.js';
 export { DateUtils } from './utils/date-utils.js';
-export { 
-  buildVersionedPath, 
+export {
+  buildVersionedPath,
   API_VERSIONS,
-  type ApiVersion 
+  type ApiVersion
 } from './utils/api-paths.js';
 export {
   DeskbirdApiError,
@@ -44,18 +44,19 @@ export * from './types/index.js';
  */
 export function createDeskbirdClient(config: CreateDeskbirdClientConfig): DeskbirdSdk {
   console.log('[Deskbird SDK] Creating client for Deskbird API');
-  
+
   // Map the minimal config to the full SDK config
   const sdkConfig: DeskbirdSdkConfig = {
     refreshToken: config.refreshToken,
     googleApiKey: config.googleApiKey,
-    
+
     // Optional configurations
     timeout: config.timeout,
     apiVersion: config.apiVersion,
     defaultWorkspaceId: config.defaultWorkspaceId,
     defaultResourceId: config.defaultResourceId,
     defaultGroupId: config.defaultGroupId,
+    defaultCompanyId: config.defaultCompanyId,
     enableRequestLogging: config.enableRequestLogging,
   };
 

@@ -26,6 +26,7 @@ export class DeskbirdSdk {
 
   // Configuration
   private config: DeskbirdSdkConfig;
+  private cachedCompanyId: string | null = null;
 
   constructor(config: DeskbirdSdkConfig) {
     this.config = {
@@ -65,7 +66,7 @@ export class DeskbirdSdk {
     // If we don't have a token or it might be expired, refresh it
     if (!this.currentAccessToken) {
       this.tokenRefreshPromise = this.refreshAccessToken();
-      
+
       try {
         this.currentAccessToken = await this.tokenRefreshPromise;
         this.updateHttpClientAuth();
@@ -83,7 +84,7 @@ export class DeskbirdSdk {
    */
   private async refreshAccessToken(): Promise<string> {
     console.log('[Deskbird SDK] Refreshing access token');
-    
+
     try {
       const accessToken = await this.authApi.refreshAccessToken(this.config.refreshToken);
       this.currentAccessToken = accessToken;
@@ -111,7 +112,7 @@ export class DeskbirdSdk {
    */
   async initialize(): Promise<void> {
     console.log('[Deskbird SDK] Initializing SDK');
-    
+
     try {
       await this.ensureAccessToken();
       console.log('[Deskbird SDK] SDK initialized successfully');
@@ -137,7 +138,7 @@ export class DeskbirdSdk {
     headers?: Record<string, string>
   ): Promise<T> {
     console.log(`[Deskbird SDK] Making ${method} request to: ${path}`);
-    
+
     await this.ensureAccessToken();
 
     // If path doesn't start with /v, assume it needs the default version
@@ -171,6 +172,42 @@ export class DeskbirdSdk {
   }
 
   /**
+   * Get company ID with auto-discovery
+   * Priority: 1. defaultCompanyId from config, 2. from current user
+   */
+  async getCompanyId(): Promise<string> {
+    // Return cached value if available
+    if (this.cachedCompanyId) {
+      return this.cachedCompanyId;
+    }
+
+    console.log('[Deskbird SDK] Getting company ID');
+
+    await this.ensureAccessToken();
+
+    // Use provided default or auto-discover from current user
+    let companyId = this.config.defaultCompanyId;
+
+    if (!companyId) {
+      console.log('[Deskbird SDK] No default company ID provided, discovering from current user');
+      const currentUser = await this.user.getCurrentUser();
+      companyId = currentUser.companyId || currentUser.data?.companyId;
+
+      if (!companyId) {
+        throw new Error('Unable to determine company ID from current user or configuration');
+      }
+
+      console.log(`[Deskbird SDK] Discovered company ID from user: ${companyId}`);
+    } else {
+      console.log(`[Deskbird SDK] Using configured company ID: ${companyId}`);
+    }
+
+    // Cache the company ID
+    this.cachedCompanyId = companyId;
+    return companyId;
+  }
+
+  /**
    * Get workspace and group IDs with auto-discovery
    */
   async getWorkspaceConfig(): Promise<{
@@ -178,7 +215,7 @@ export class DeskbirdSdk {
     groupId: string;
   }> {
     console.log('[Deskbird SDK] Getting workspace configuration');
-    
+
     await this.ensureAccessToken();
 
     // Use provided defaults or auto-discover
@@ -201,7 +238,7 @@ export class DeskbirdSdk {
    */
   async findDeskZoneId(deskNumber: number): Promise<number | null> {
     console.log(`[Deskbird SDK] Finding zone ID for desk: ${deskNumber}`);
-    
+
     const { workspaceId, groupId } = await this.getWorkspaceConfig();
     return this.workspaces.findDeskZoneId(deskNumber, workspaceId, groupId);
   }
@@ -211,7 +248,7 @@ export class DeskbirdSdk {
    */
   async getAvailableDesks() {
     console.log('[Deskbird SDK] Getting all available desks');
-    
+
     const { workspaceId, groupId } = await this.getWorkspaceConfig();
     return this.workspaces.getAvailableDesks(workspaceId, groupId);
   }
@@ -226,7 +263,7 @@ export class DeskbirdSdk {
     endHour?: number;
   }) {
     console.log(`[Deskbird SDK] Booking desk ${params.deskNumber} for ${params.date}`);
-    
+
     await this.ensureAccessToken();
 
     // Get zone ID for the desk
@@ -263,11 +300,38 @@ export class DeskbirdSdk {
   }
 
   /**
+   * Search users with dynamic company ID (convenience method)
+   */
+  async searchUsers(params: {
+    searchQuery: string;
+    companyId?: number;
+    offset?: number;
+    limit?: number;
+    sortField?: string;
+    sortOrder?: 'ASC' | 'DESC';
+    excludeUserIds?: string;
+  }) {
+    console.log(`[Deskbird SDK] Searching users with query: ${params.searchQuery}`);
+
+    // Use provided company ID or get dynamic one
+    let companyId = params.companyId;
+    if (!companyId) {
+      const dynamicCompanyId = await this.getCompanyId();
+      companyId = parseInt(dynamicCompanyId, 10);
+    }
+
+    return this.user.searchUsers({
+      ...params,
+      companyId,
+    });
+  }
+
+  /**
    * Add desk to favorites by desk number (convenience method)
    */
   async favoriteDeskByNumber(deskNumber: number) {
     console.log(`[Deskbird SDK] Adding desk ${deskNumber} to favorites`);
-    
+
     const zoneId = await this.findDeskZoneId(deskNumber);
     if (!zoneId) {
       throw new Error(`Desk ${deskNumber} not found`);
@@ -281,7 +345,7 @@ export class DeskbirdSdk {
    */
   async unfavoriteDeskByNumber(deskNumber: number) {
     console.log(`[Deskbird SDK] Removing desk ${deskNumber} from favorites`);
-    
+
     const zoneId = await this.findDeskZoneId(deskNumber);
     if (!zoneId) {
       throw new Error(`Desk ${deskNumber} not found`);
@@ -302,5 +366,13 @@ export class DeskbirdSdk {
    */
   getConfig(): DeskbirdSdkConfig {
     return { ...this.config };
+  }
+
+  /**
+   * Get the currently resolved company ID (if cached)
+   * Returns null if not yet resolved
+   */
+  getCachedCompanyId(): string | null {
+    return this.cachedCompanyId;
   }
 }

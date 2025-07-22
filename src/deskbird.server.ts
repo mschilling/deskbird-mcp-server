@@ -1,8 +1,8 @@
 // Refactored Deskbird MCP Server using the new SDK
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { 
-  CallToolRequestSchema, 
-  ListToolsRequestSchema, 
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
   type CallToolRequest,
   type CallToolResult,
   type Tool
@@ -166,6 +166,65 @@ const DESKBIRD_API_CALL_TOOL: Tool = {
   }
 };
 
+const SEARCH_USERS_TOOL: Tool = {
+  name: 'deskbird_search_users',
+  description: 'Search for users within the company by name, email, or other criteria.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      search_query: {
+        type: 'string',
+        description: 'Search query to find users (searches names, emails, etc.)',
+      },
+      company_id: {
+        type: 'number',
+        description: 'Company ID to search within. If not provided, will be automatically determined from the current user or environment configuration.',
+      },
+      offset: {
+        type: 'number',
+        description: 'Number of results to skip for pagination. Defaults to 0.',
+        default: 0,
+      },
+      limit: {
+        type: 'number',
+        description: 'Maximum number of results to return. Defaults to 30.',
+        default: 30,
+      },
+      sort_field: {
+        type: 'string',
+        description: 'Field to sort by. Defaults to "userName".',
+        default: 'userName',
+      },
+      sort_order: {
+        type: 'string',
+        enum: ['ASC', 'DESC'],
+        description: 'Sort order. Defaults to "ASC".',
+        default: 'ASC',
+      },
+      exclude_user_ids: {
+        type: 'string',
+        description: 'Comma-separated list of user IDs to exclude from results.',
+      },
+    },
+    required: ['search_query'],
+  },
+};
+
+const GET_USER_DETAILS_TOOL: Tool = {
+  name: 'deskbird_get_user_details',
+  description: 'Get detailed information about a specific user by their user ID.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      user_id: {
+        type: 'string',
+        description: 'The ID of the user to retrieve details for.',
+      },
+    },
+    required: ['user_id'],
+  },
+};
+
 /**
  * Refactored Deskbird MCP Server using the new SDK
  */
@@ -181,6 +240,8 @@ export class DeskbirdMcpServer {
     GET_USER_INFO_TOOL,
     GET_AVAILABLE_DESKS_TOOL,
     DESKBIRD_API_CALL_TOOL,
+    SEARCH_USERS_TOOL,
+    GET_USER_DETAILS_TOOL,
   ];
 
   constructor() {
@@ -224,6 +285,7 @@ export class DeskbirdMcpServer {
       defaultWorkspaceId: process.env.DESKBIRD_WORKSPACE_ID,
       defaultResourceId: process.env.DESKBIRD_RESOURCE_ID,
       defaultGroupId: process.env.DESKBIRD_GROUP_ID,
+      defaultCompanyId: process.env.DEFAULT_COMPANY_ID,
       enableRequestLogging: process.env.NODE_ENV === 'development',
     });
 
@@ -247,7 +309,7 @@ export class DeskbirdMcpServer {
       CallToolRequestSchema,
       async (request) => {
         console.error(`Received CallToolRequest for tool: ${request.params.name}`);
-        
+
         if (request.params.name === BOOK_DESK_TOOL.name) {
           return this.handleBookDeskWithSdk(request);
         } else if (request.params.name === GET_USER_BOOKINGS_TOOL.name) {
@@ -264,6 +326,10 @@ export class DeskbirdMcpServer {
           return this.handleGetAvailableDesksWithSdk(request);
         } else if (request.params.name === DESKBIRD_API_CALL_TOOL.name) {
           return this.handleDeskbirdApiCallWithSdk(request);
+        } else if (request.params.name === SEARCH_USERS_TOOL.name) {
+          return this.handleSearchUsersWithSdk(request);
+        } else if (request.params.name === GET_USER_DETAILS_TOOL.name) {
+          return this.handleGetUserDetailsWithSdk(request);
         } else {
           throw new Error(`Unknown tool: ${request.params.name}`);
         }
@@ -461,7 +527,7 @@ export class DeskbirdMcpServer {
       // Get available desks to enhance favorites with desk numbers
       const allDesks = await sdk.getAvailableDesks();
       const deskMapping: Record<number, number> = {};
-      
+
       // Create mapping from zone ID to desk number
       allDesks.forEach(desk => {
         if (desk.zoneId && desk.deskNumber !== null) {
@@ -630,9 +696,17 @@ export class DeskbirdMcpServer {
       }
 
       // Use SDK's generic API call method
+      // If api_version is provided, prepend it to the path
+      let finalPath = params.path;
+      if (params.api_version && !params.path.match(/^\/v\d+(\.\d+)?/)) {
+        // Build versioned path manually if api_version is specified
+        const version = params.api_version.startsWith('v') ? params.api_version : `v${params.api_version}`;
+        finalPath = `/${version}${params.path.startsWith('/') ? params.path : `/${params.path}`}`;
+      }
+
       const responseData = await sdk.apiCall(
         params.method,
-        params.path,
+        finalPath,
         params.body,
         params.query_params,
         params.headers
@@ -653,6 +727,95 @@ export class DeskbirdMcpServer {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       return {
         content: [{ type: 'text', text: `❌ **API Call Failed**\n\nError: ${errorMessage}` }],
+        isError: true,
+      };
+    }
+  }
+
+  /**
+   * Handle user search using the SDK
+   */
+  private async handleSearchUsersWithSdk(request: CallToolRequest): Promise<CallToolResult> {
+    console.log("Executing tool 'deskbird_search_users' with SDK");
+
+    try {
+      const sdk = await this.initializeSdk();
+      const params = request.params.arguments as any;
+
+      if (!params?.search_query) {
+        throw new Error("Missing required parameter: 'search_query'");
+      }
+
+      // Use SDK's user search method with dynamic company ID
+      const responseData = await sdk.searchUsers({
+        searchQuery: params.search_query,
+        companyId: params.company_id, // Will be auto-discovered if not provided
+        offset: params.offset ?? 0,
+        limit: params.limit ?? 30,
+        sortField: params.sort_field ?? 'userName',
+        sortOrder: params.sort_order ?? 'ASC',
+        excludeUserIds: params.exclude_user_ids,
+      });
+
+      const result = {
+        success: true,
+        message: `Found ${responseData.data.length} user(s) matching your search.`,
+        total: responseData.total,
+        users: responseData.data,
+      };
+
+      return {
+        content: [{
+          type: 'text',
+          text: `User Search Results:\n\n${result.message}\n\n${result.users.map(user => `• ${user.firstName} ${user.lastName} (${user.email}) - ID: ${user.id}`).join('\n')}\n\nTotal: ${result.total} users found`
+        }],
+        isError: false,
+      };
+    } catch (error) {
+      console.error('Error in handleSearchUsersWithSdk:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      return {
+        content: [{ type: 'text', text: `Error: ${errorMessage}` }],
+        isError: true,
+      };
+    }
+  }
+
+  /**
+   * Handle getting user details using the SDK
+   */
+  private async handleGetUserDetailsWithSdk(request: CallToolRequest): Promise<CallToolResult> {
+    console.log("Executing tool 'deskbird_get_user_details' with SDK");
+
+    try {
+      const sdk = await this.initializeSdk();
+      const params = request.params.arguments as any;
+
+      if (!params?.user_id) {
+        throw new Error("Missing required parameter: 'user_id'");
+      }
+
+      // Use SDK's user details method
+      const responseData = await sdk.user.getUserById(params.user_id);
+
+      const result = {
+        success: true,
+        message: `Retrieved details for user ${responseData.firstName} ${responseData.lastName}`,
+        user: responseData,
+      };
+
+      return {
+        content: [{
+          type: 'text',
+          text: `User Details Retrieved Successfully!\n\n👤 **${responseData.firstName} ${responseData.lastName}**\n📧 Email: ${responseData.email}\n🆔 User ID: ${responseData.id}\n🏢 Company ID: ${responseData.companyId}\n🏢 Office ID: ${responseData.primaryOfficeId}\n🎨 Avatar Color: ${responseData.avatarColor}\n🖼️ Profile Image: ${responseData.profileImage || 'None'}\n\nDetailed Info:\n${JSON.stringify(result, null, 2)}`
+        }],
+        isError: false,
+      };
+    } catch (error) {
+      console.error('Error in handleGetUserDetailsWithSdk:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      return {
+        content: [{ type: 'text', text: `Error: ${errorMessage}` }],
         isError: true,
       };
     }
