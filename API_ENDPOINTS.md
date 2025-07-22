@@ -1,6 +1,47 @@
 # Deskbird API Endpoints Documentation
 
-This document provides a comprehensive overview of all API endpoints implemented in the Deskbird MCP Server SDK.
+This document provides a comprehensive overview of all Deskbird API endpoints available through the Deskbird MCP Server and SDK. It serves as both a reference for the `deskbird_api_call` tool and documentation of the underlying API structure.
+
+## Quick Navigation
+
+- [MCP Tool Integration](#mcp-tool-integration) - How API endpoints map to MCP tools
+- [API Base Configuration](#api-base-configuration) - Base URLs, authentication, timeouts
+- [Endpoints Overview](#endpoints-overview) - Complete endpoint reference tables
+- [Booking Operations](#booking-creation-functionality) - Detailed booking workflows
+- [SDK Coverage](#sdk-coverage) - Which endpoints are covered by the SDK
+
+## MCP Tool Integration
+
+The Deskbird MCP Server provides 10 tools that abstract common API operations. Here's how they map to the underlying API endpoints:
+
+### Dedicated MCP Tools
+
+| MCP Tool | API Endpoint(s) | Version | Description |
+|----------|----------------|---------|-------------|
+| `deskbird_book_desk` | `POST /bookings` | v1.1 | Book a desk for specific date with auto-validation |
+| `deskbird_get_user_bookings` | `GET /user/bookings` | v1.1 | Get user's bookings with pagination |
+| `deskbird_favorite_desk` | `PATCH /user/favoriteResource` | v1.1 | Add desk to favorites by desk number |
+| `deskbird_unfavorite_desk` | `DELETE /user/favoriteResource/{zoneId}` | v1.1 | Remove desk from favorites |
+| `deskbird_get_user_favorites` | `GET /user/favoriteResources` | v1.1 | List user's favorite desks |
+| `deskbird_get_user_info` | `GET /user` | v1.1 | Get current user profile and settings |
+| `deskbird_get_available_desks` | `GET /company/internalWorkspaces/{id}/groups/{id}/floorConfig` | v1.1 | Get all desks from floor configuration |
+| `deskbird_search_users` | `GET /users` | v3 | Search company users with filters |
+| `deskbird_get_user_details` | `GET /users/{userId}` | v3 | Get detailed user information |
+
+### Advanced Operations (via `deskbird_api_call` only)
+
+| Operation | API Endpoint(s) | Version | Description |
+|-----------|----------------|---------|-------------|
+| Guest Bookings | `POST /bookings` | v1.1 | Create bookings for external visitors |
+| Booking Updates | `PATCH /bookings/{id}` | v1.1 | Modify existing booking times/details |
+| Booking Cancellation | `PATCH /bookings/{id}/cancel`, `DELETE /bookings/{id}` | v1.1 | Cancel bookings (two methods available) |
+| Scheduling Overview | `GET /scheduling/list` | v2 | Multi-day scheduling with team presence |
+| Company Administration | `GET /businesscompany/{id}` | v1.1 | Business settings and integrations |
+| Corporate Info | `GET /user/corporateInfo` | v1.4 | Enhanced company information |
+| Workspace Zones | `GET /internalWorkspaces/{id}/zones` | v1.2 | Zone info including parking spaces |
+| Booking Spaces Detail | `GET /user/bookings/{workspaceId}/spaces` | v1.1 | Detailed booking and space info |
+
+**💡 Tip**: Use dedicated MCP tools for common operations. Use `deskbird_api_call` for advanced scenarios, guest bookings, administrative tasks, or operations not covered by dedicated tools.
 
 ## API Base Configuration
 
@@ -67,6 +108,93 @@ This document provides a comprehensive overview of all API endpoints implemented
 | Endpoint Path | HTTP Method | Query String Options | API Version | Comments/Description |
 |---------------|-------------|---------------------|-------------|---------------------|
 | `https://securetoken.googleapis.com/v1/token` | POST | `key` (API key) | v1 | Refresh OAuth access token using refresh token |
+
+## Using `deskbird_api_call` with These Endpoints
+
+The `deskbird_api_call` MCP tool provides direct access to all documented endpoints. Here are some practical examples:
+
+### Quick Examples
+
+**Get user corporate information:**
+```json
+{
+  "method": "GET",
+  "path": "/user/corporateInfo",
+  "api_version": "v1.4"
+}
+```
+
+**Get scheduling overview for 3 weeks:**
+```json
+{
+  "method": "GET", 
+  "path": "/scheduling/list",
+  "api_version": "v2",
+  "query_params": {
+    "startDate": "2025-01-20",
+    "numberOfDays": 21
+  }
+}
+```
+
+**Create guest booking:**
+```json
+{
+  "method": "POST",
+  "path": "/bookings", 
+  "body": {
+    "bookings": [{
+      "guest": {
+        "firstName": "Alice",
+        "lastName": "Johnson", 
+        "email": "alice@external.com"
+      },
+      "bookingStartTime": 1737709200000,
+      "bookingEndTime": 1737738000000,
+      "zoneItemId": 12345,
+      "isAnonymous": false
+    }]
+  }
+}
+```
+
+**Update booking end time:**
+```json
+{
+  "method": "PATCH",
+  "path": "/bookings/67890",
+  "body": {
+    "bookingId": "67890",
+    "bookingEndTime": 1737741600000
+  }
+}
+```
+
+**Search users in different company:**
+```json
+{
+  "method": "GET",
+  "path": "/users",
+  "api_version": "v3",
+  "query_params": {
+    "searchQuery": "smith",
+    "companyId": 2927,
+    "limit": 25,
+    "sortOrder": "DESC"
+  }
+}
+```
+
+### Parameter Validation
+
+When using `deskbird_api_call`, ensure:
+- **API Version**: Use correct version for each endpoint (see [API Versioning Strategy](#api-versioning-strategy))
+- **Timestamps**: Use Unix timestamps in milliseconds for booking times
+- **Company IDs**: Numeric company IDs (auto-discovered by default)
+- **Zone/Resource IDs**: Use actual zone item IDs, not desk numbers
+- **Required Fields**: Include all required parameters for each endpoint
+
+For full parameter details and schemas, see the dedicated sections below.
 
 ## Parameter Documentation by Feature
 
@@ -329,10 +457,57 @@ The SDK uses endpoint-specific versioning, where different endpoints can use dif
 
 The versioning is handled automatically by the `getVersionedEndpoint()` utility function, which maps each endpoint to its appropriate API version.
 
-## Test Results
+## SDK Coverage
 
-✅ **Working Endpoints**: 19/19 endpoints tested successfully  
-🎉 **All endpoints working**: All documented GET endpoints have been verified and are functional
+The Deskbird SDK provides comprehensive coverage of the API endpoints through modular clients:
+
+### AuthApi (`src/sdk/api/auth.api.ts`)
+- **Token Management**: Automatic OAuth token refresh using Google API
+- **Authentication**: Handles all authentication workflows
+
+### UserApi (`src/sdk/api/user.api.ts`)  
+- **Profile Management**: `GET /user` for current user information
+- **User Search**: `GET /users` (v3) with advanced filtering
+- **User Details**: `GET /users/{userId}` (v3) for individual user data
+
+### BookingsApi (`src/sdk/api/bookings.api.ts`)
+- **Booking Creation**: `POST /bookings` with regular and guest booking support
+- **Booking Retrieval**: `GET /user/bookings` with pagination and filtering
+- **Booking Management**: Cancel and update operations
+
+### FavoritesApi (`src/sdk/api/favorites.api.ts`)
+- **Favorites Management**: `GET`, `PATCH`, `DELETE` operations for favorite desks
+- **Smart Mapping**: Converts desk numbers to zone IDs automatically
+
+### WorkspacesApi (`src/sdk/api/workspaces.api.ts`)
+- **Workspace Discovery**: `GET /company/internalWorkspaces` 
+- **Floor Configuration**: Parse floor config for desk information
+- **Desk Mapping**: Convert desk numbers to zone IDs and vice versa
+
+### High-Level SDK Methods
+The SDK also provides convenience methods that combine multiple API calls:
+- `bookDesk()` - Book desk by number (finds zone ID automatically)
+- `getAvailableDesks()` - Get all desks with auto-discovery
+- `favoriteDeskByNumber()` - Favorite by desk number (not zone ID)
+- `apiCall()` - Generic method for any API endpoint
+
+**Note**: All endpoints are available through the SDK, either via dedicated clients or the generic `apiCall()` method.
+
+### SDK Methods Not Directly Exposed as MCP Tools
+
+The SDK includes additional convenience methods that combine multiple API calls or provide enhanced functionality:
+
+| SDK Method | Description | Available via MCP |
+|------------|-------------|-------------------|
+| `getUpcomingBookings()` | Get upcoming bookings with smart defaults | ✅ `deskbird_get_user_bookings` with `upcoming: true` |
+| `getUserProfile()` | Simplified user profile (subset of full user data) | ✅ `deskbird_get_user_info` (returns full profile) |
+| `toggleFavorite()` | Smart toggle favorite status | ✅ Use `deskbird_favorite_desk` / `deskbird_unfavorite_desk` |
+| `discoverWorkspaceId()` | Auto-discover workspace ID | 🔧 Internal method used by other tools |
+| `discoverGroupId()` | Auto-discover group ID | 🔧 Internal method used by other tools |
+| `findDeskZoneId()` | Find zone ID by desk number | 🔧 Internal method used by booking tools |
+| `validateToken()` | Check token validity | 🔧 Internal authentication method |
+
+**Note**: Most SDK convenience methods are used internally by MCP tools to provide smart defaults and auto-discovery features.
 
 ## Request/Response Patterns
 
@@ -387,9 +562,28 @@ const desks = await workspacesApi.getAvailableDesks(workspaceId, groupId);
 
 The API provides comprehensive functionality across several key feature areas:
 
+### Integration Architecture  
+- **MCP Layer**: 10 specialized tools for common operations with smart defaults
+- **SDK Layer**: 5 modular API clients with automatic discovery and error handling  
+- **API Layer**: 19+ endpoints across versions v1.1, v1.2, v1.4, v2, and v3
+- **Authentication**: Seamless OAuth token management via Google API
+
+### Development Workflow
+1. **Use Dedicated Tools First**: Start with specific MCP tools (`deskbird_book_desk`, etc.)
+2. **Advanced Operations**: Use `deskbird_api_call` for complex scenarios
+3. **SDK Integration**: For direct application integration, use the TypeScript SDK
+4. **API Documentation**: Reference this document for endpoint details and parameters
+
+### Feature Coverage
 - **User Management**: Complete user profile management, search capabilities with social features (follow system), and corporate information access
 - **Booking Management**: Full booking lifecycle support including creation (regular and guest bookings), updates (time changes, desk switches), and cancellation (multiple methods)
 - **Workspace & Resources**: Physical space management including desk favorites, floor configurations, zone information, and detailed space availability
 - **Scheduling & Planning**: Advanced scheduling features with multi-day overviews, team presence indicators, and booking summaries
 - **Company Administration**: Business-level configuration including integrations (HRIS, calendar), office roles, privacy policies, and administrative settings
 - **Events & Data**: Event system integration and miscellaneous data endpoints
+
+### Cross-References
+- **MCP Tools**: See [README.md](README.md) for detailed MCP tool documentation
+- **SDK Documentation**: See [src/sdk/README.md](src/sdk/README.md) for SDK integration guide
+- **Authentication**: OAuth setup and Google API key configuration in main README
+- **Examples**: Practical `deskbird_api_call` examples throughout this document
