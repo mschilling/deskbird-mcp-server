@@ -208,9 +208,10 @@ export class UserApi {
     console.log('[User API] Getting user details for ID:', userId);
 
     try {
-      const response = await this.client.get<UserDetails>(
-        getVersionedEndpoint('USER_DETAILS', `/users/${userId}`)
-      );
+      // We will always return the full profile, so no ?basicInfo query param
+      const endpointPath = getVersionedEndpoint('USER_DETAILS', `/user/${userId}`);
+
+      const response = await this.client.get<UserDetails>(endpointPath);
 
       if (!response.success || !response.data) {
         throw new Error(`Failed to get user details: ${response.status} ${response.statusText}`);
@@ -219,6 +220,49 @@ export class UserApi {
       return response.data;
     } catch (error: unknown) {
       handleDeskbirdException(error, 'getUserById');
+    }
+  }
+
+  /**
+   * Send a follow request to a user
+   */
+  async followUser(userId: string): Promise<any> {
+    console.log('[User API] Sending follow request to user ID:', userId);
+
+    try {
+      const response = await this.client.post(
+        getVersionedEndpoint('USER_FOLLOW_REQUEST', '/user/followRequest'),
+        { userId }
+      );
+
+      if (!response.success) {
+        throw new Error(`Failed to follow user: ${response.status} ${response.statusText}`);
+      }
+
+      return response.data;
+    } catch (error: unknown) {
+      handleDeskbirdException(error, 'followUser');
+    }
+  }
+
+  /**
+   * Unfollow a user
+   */
+  async unfollowUser(userId: string): Promise<any> {
+    console.log('[User API] Unfollowing user ID:', userId);
+
+    try {
+      const response = await this.client.delete(
+        getVersionedEndpoint('USER_UNFOLLOW', `/user/favourites/${userId}`)
+      );
+
+      if (!response.success) {
+        throw new Error(`Failed to unfollow user: ${response.status} ${response.statusText}`);
+      }
+
+      return response.data;
+    } catch (error: unknown) {
+      handleDeskbirdException(error, 'unfollowUser');
     }
   }
 }

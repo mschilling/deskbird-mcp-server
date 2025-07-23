@@ -224,6 +224,66 @@ const GET_USER_DETAILS_TOOL: Tool = {
   },
 };
 
+const GET_STAFF_PLANNING_TOOL: Tool = {
+  name: 'deskbird_get_staff_planning',
+  description: 'Retrieves staff planning overview for a specified date range, with options to filter by all users or only favorites.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      start_date: {
+        type: 'string',
+        format: 'date',
+        description: 'The start date for the staff planning in YYYY-MM-DD format.',
+      },
+      days: {
+        type: 'number',
+        description: 'The number of days to retrieve staff planning for, starting from the start_date.',
+      },
+      all_users: {
+        type: 'boolean',
+        description: 'If true, includes all users; otherwise, only shows users in your favorites. Defaults to false.',
+        default: false,
+      },
+      only_favorites: {
+        type: 'boolean',
+        description: 'If true, filters the results to only show users marked as favorites. Defaults to false.',
+        default: false,
+      },
+    },
+    required: ['start_date', 'days'],
+  },
+};
+
+const FOLLOW_USER_TOOL: Tool = {
+  name: 'deskbird_follow_user',
+  description: 'Sends a follow request to another user.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      user_id: {
+        type: 'string',
+        description: 'The ID of the user to follow.',
+      },
+    },
+    required: ['user_id'],
+  },
+};
+
+const UNFOLLOW_USER_TOOL: Tool = {
+  name: 'deskbird_unfollow_user',
+  description: 'Unfollows a user (removes them from your favorites/followed list).',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      user_id: {
+        type: 'string',
+        description: 'The ID of the user to unfollow.',
+      },
+    },
+    required: ['user_id'],
+  },
+};
+
 export class DeskbirdMcpServer {
   private readonly mcpServer: Server;
   private deskbirdSdk: DeskbirdSdk | null = null;
@@ -240,6 +300,9 @@ export class DeskbirdMcpServer {
       GET_AVAILABLE_DESKS_TOOL,
       SEARCH_USERS_TOOL,
       GET_USER_DETAILS_TOOL,
+      FOLLOW_USER_TOOL,
+      UNFOLLOW_USER_TOOL,
+      GET_STAFF_PLANNING_TOOL,
     ];
 
     // Check if preview tools are enabled
@@ -346,6 +409,12 @@ export class DeskbirdMcpServer {
           return this.handleSearchUsersWithSdk(request);
         } else if (request.params.name === GET_USER_DETAILS_TOOL.name) {
           return this.handleGetUserDetailsWithSdk(request);
+        } else if (request.params.name === FOLLOW_USER_TOOL.name) {
+          return this.handleFollowUserWithSdk(request);
+        } else if (request.params.name === UNFOLLOW_USER_TOOL.name) {
+          return this.handleUnfollowUserWithSdk(request);
+        } else if (request.params.name === GET_STAFF_PLANNING_TOOL.name) {
+          return this.handleGetStaffPlanningWithSdk(request);
         } else {
           throw new Error(`Unknown tool: ${request.params.name}`);
         }
@@ -805,6 +874,130 @@ export class DeskbirdMcpServer {
       };
     } catch (error) {
       console.error('Error in handleGetUserDetailsWithSdk:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      return {
+        content: [{ type: 'text', text: `Error: ${errorMessage}` }],
+        isError: true,
+      };
+    }
+  }
+
+  /**
+   * Handle following a user using the SDK
+   */
+  private async handleFollowUserWithSdk(request: CallToolRequest): Promise<CallToolResult> {
+    console.log("Executing tool 'deskbird_follow_user' with SDK");
+
+    try {
+      const sdk = await this.initializeSdk();
+      const params = request.params.arguments as any;
+
+      if (!params?.user_id) {
+        throw new Error("Missing required parameter: 'user_id'");
+      }
+
+      // Use SDK's user API for followUser
+      const responseData = await sdk.user.followUser(params.user_id);
+
+      const result = {
+        success: true,
+        message: `Successfully sent follow request to user ID: ${params.user_id}`,
+        details: responseData,
+      };
+
+      return {
+        content: [{
+          type: 'text',
+          text: `Follow User Request Sent!\n\n${result.message}\n\nDetails:\n${JSON.stringify(result, null, 2)}`
+        }],
+        isError: false,
+      };
+    } catch (error) {
+      console.error('Error in handleFollowUserWithSdk:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      return {
+        content: [{ type: 'text', text: `Error: ${errorMessage}` }],
+        isError: true,
+      };
+    }
+  }
+
+  /**
+   * Handle unfollowing a user using the SDK
+   */
+  private async handleUnfollowUserWithSdk(request: CallToolRequest): Promise<CallToolResult> {
+    console.log("Executing tool 'deskbird_unfollow_user' with SDK");
+
+    try {
+      const sdk = await this.initializeSdk();
+      const params = request.params.arguments as any;
+
+      if (!params?.user_id) {
+        throw new Error("Missing required parameter: 'user_id'");
+      }
+
+      // Use SDK's user API for unfollowUser
+      const responseData = await sdk.user.unfollowUser(params.user_id);
+
+      const result = {
+        success: true,
+        message: `Successfully unfollowed user ID: ${params.user_id}`,
+        details: responseData,
+      };
+
+      return {
+        content: [{
+          type: 'text',
+          text: `User Unfollowed Successfully!\n\n${result.message}\n\nDetails:\n${JSON.stringify(result, null, 2)}`
+        }],
+        isError: false,
+      };
+    } catch (error) {
+      console.error('Error in handleUnfollowUserWithSdk:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      return {
+        content: [{ type: 'text', text: `Error: ${errorMessage}` }],
+        isError: true,
+      };
+    }
+  }
+
+  /**
+   * Handle getting staff planning using the SDK
+   */
+  private async handleGetStaffPlanningWithSdk(request: CallToolRequest): Promise<CallToolResult> {
+    console.log("Executing tool 'deskbird_get_staff_planning' with SDK");
+
+    try {
+      const sdk = await this.initializeSdk();
+      const params = request.params.arguments as any;
+
+      if (!params?.start_date || params?.days === undefined) {
+        throw new Error("Missing required parameters: 'start_date' and 'days'");
+      }
+
+      const responseData = await sdk.scheduling.getStaffPlanning({
+        startDate: params.start_date,
+        days: params.days,
+        all: params.all_users,
+        favorites: params.only_favorites,
+      });
+
+      const result = {
+        success: true,
+        message: `Retrieved staff planning for ${params.days} days starting from ${params.start_date}.`,
+        data: responseData,
+      };
+
+      return {
+        content: [{
+          type: 'text',
+          text: `Staff Planning Retrieved Successfully!\n\n${result.message}\n\nDetails:\n${JSON.stringify(result, null, 2)}`
+        }],
+        isError: false,
+      };
+    } catch (error) {
+      console.error('Error in handleGetStaffPlanningWithSdk:', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       return {
         content: [{ type: 'text', text: `Error: ${errorMessage}` }],
