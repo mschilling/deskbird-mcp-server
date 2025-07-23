@@ -62,6 +62,8 @@ The Deskbird MCP Server provides 10 tools that abstract common API operations. H
 | `/users` | GET | `searchQuery`, `companyId`, `offset`, `limit`, `sortField`, `sortOrder`, `excludeUserIds`, `followStatus` | v3 | Search for users in the company with follow system support |
 | `/users/{userId}` | GET | None | v3 | Get detailed user information by user ID |
 | `/user/corporateInfo` | GET | None | v1.4 | Comprehensive company information |
+| `/user/followRequest` | POST | `{userId}` in body | v1.1 | Follow a user (send follow request) |
+| `/user/favourites/{userId}` | DELETE | None | v1.1 | Unfollow a user (remove from favourites) |
 
 ### Booking Management
 
@@ -176,6 +178,24 @@ Here are some practical examples:
 }
 ```
 
+**Create booking with error handling:**
+```json
+{
+  "method": "POST",
+  "path": "/bookings",
+  "body": {
+    "bookings": [{
+      "bookingStartTime": 1753340400000,
+      "bookingEndTime": 1753369200000,
+      "isAnonymous": false,
+      "resourceId": "70645",
+      "workspaceId": "6817", 
+      "zoneItemId": 476804
+    }]
+  }
+}
+```
+
 **Search users in different company:**
 ```json
 {
@@ -196,9 +216,15 @@ Here are some practical examples:
 When using `deskbird_api_call`, ensure:
 - **API Version**: Use correct version for each endpoint (see [API Versioning Strategy](#api-versioning-strategy))
 - **Timestamps**: Use Unix timestamps in milliseconds for booking times
+  - Convert local time to UTC milliseconds: `new Date('2025-07-24T09:00:00+02:00').getTime()`
+  - Verify with: `new Date(timestamp).toISOString()` 
 - **Company IDs**: Numeric company IDs (auto-discovered by default)
 - **Zone/Resource IDs**: Use actual zone item IDs, not desk numbers
 - **Required Fields**: Include all required parameters for each endpoint
+- **Anonymous Bookings**: Check workspace `allowsAnonymousBooking` setting before attempting
+- **Office Hours**: Ensure booking times fall within workspace `openingHours`
+
+**Pro Tip**: Always test your timestamp calculations in your local timezone before making API calls. A common issue is using seconds instead of milliseconds, or not accounting for timezone differences.
 
 For full parameter details and schemas, see the dedicated sections below.
 
@@ -278,6 +304,24 @@ For standard desk bookings by registered users:
   - `zoneItemId` (number, required): The specific desk/zone item ID to book (e.g., 476809 for Desk 58)
   - `workspaceId` (string, required): The workspace ID where the booking is made
 
+### Important Booking Considerations
+
+#### Anonymous Bookings
+- **Workspace Policy**: Anonymous bookings are controlled by the workspace setting `allowsAnonymousBooking`
+- **Check Before Booking**: If this setting is `false`, requests with `isAnonymous: true` will fail with a 403 Forbidden error
+- **Fallback Strategy**: When anonymous booking fails, create a regular booking instead
+
+#### Timezone and Timestamps
+- **Format**: All timestamps must be Unix timestamps in milliseconds (not seconds)
+- **Timezone Handling**: Timestamps should account for the workspace's timezone
+- **Example Calculation**: For Amsterdam timezone (Europe/Amsterdam, UTC+2 in summer):
+  ```javascript
+  // 9:00 AM Amsterdam time = 7:00 AM UTC
+  const startTime = new Date('2025-07-24T09:00:00+02:00').getTime(); // 1753340400000
+  const endTime = new Date('2025-07-24T17:00:00+02:00').getTime();   // 1753369200000
+  ```
+- **Office Hours**: Ensure booking times fall within the workspace's `openingHours` configuration
+
 ### Guest User Booking
 
 For booking desks for external guests and visitors:
@@ -312,7 +356,7 @@ For booking desks for external guests and visitors:
   - `zoneItemId` (number, required): The specific desk/zone item ID to book
   - `isAnonymous` (boolean, optional): Whether the booking should be anonymous (default: false)
 
-**Note**: Guest bookings don't require `resourceId` or `workspaceId` as these are inferred from the `zoneItemId`.
+**Note**: Guest bookings don't require `resourceId` or `workspaceId` as these are inferred from the `zoneItemId`. However, the same anonymous booking restrictions apply - check workspace settings first.
 
 ### Booking Use Cases
 
@@ -324,6 +368,37 @@ This functionality enables:
 - **Event Coordination**: Reserve spaces for conference attendees or meeting participants
 - **Contractor Support**: Allocate desks for temporary workers or consultants
 - **Flexible Workspace Management**: Support both hot-desking and assigned seating models
+
+### Common Booking Errors and Solutions
+
+#### 403 Forbidden Error
+- **Anonymous Booking Disabled**: Check workspace settings for `allowsAnonymousBooking: false`
+- **Solution**: Create regular booking instead of anonymous booking
+- **Check Settings**: Use `GET /user` to see workspace `settings.allowsAnonymousBooking`
+
+#### 400 Bad Request - "Invalid booking start and end time"
+- **Incorrect Timestamp Format**: Ensure using milliseconds, not seconds
+- **Timezone Issues**: Timestamps may not account for local timezone
+- **Outside Office Hours**: Check workspace `openingHours` configuration
+- **Solution**: Convert local time to proper UTC millisecond timestamps
+
+#### Missing Required Fields
+- **Regular Bookings**: Must include `resourceId`, `workspaceId`, `zoneItemId`
+- **Guest Bookings**: Must include `guest` object, can omit `resourceId`/`workspaceId`
+- **Solution**: Check workspace configuration to get required IDs
+
+#### Example: Debugging Timestamp Issues
+```javascript
+// Wrong: Using seconds instead of milliseconds
+const wrongTime = Math.floor(Date.now() / 1000); // ❌
+
+// Correct: Using milliseconds with timezone awareness
+const correctStart = new Date('2025-07-24T09:00:00+02:00').getTime(); // ✅
+const correctEnd = new Date('2025-07-24T17:00:00+02:00').getTime();   // ✅
+
+// Verify readable format
+console.log(new Date(correctStart).toISOString()); // Should show expected UTC time
+```
 
 ## Booking Cancellation
 
