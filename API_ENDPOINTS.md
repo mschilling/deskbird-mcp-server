@@ -62,6 +62,8 @@ The Deskbird MCP Server provides 10 tools that abstract common API operations. H
 | `/users` | GET | `searchQuery`, `companyId`, `offset`, `limit`, `sortField`, `sortOrder`, `excludeUserIds`, `followStatus` | v3 | Search for users in the company with follow system support |
 | `/users/{userId}` | GET | None | v3 | Get detailed user information by user ID |
 | `/user/corporateInfo` | GET | None | v1.4 | Comprehensive company information |
+| `/user/followRequest` | POST | `{userId}` in body | v1.1 | Follow a user (send follow request) |
+| `/user/favourites/{userId}` | DELETE | None | v1.1 | Unfollow a user (remove from favourites) |
 
 ### Booking Management
 
