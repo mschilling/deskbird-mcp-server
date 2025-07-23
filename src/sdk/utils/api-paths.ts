@@ -13,7 +13,7 @@ export function buildVersionedPath(version: string, path: string): string {
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   // Ensure version starts with v
   const cleanVersion = version.startsWith('v') ? version : `v${version}`;
-  
+
   return `/${cleanVersion}${cleanPath}`;
 }
 
@@ -22,6 +22,7 @@ export function buildVersionedPath(version: string, path: string): string {
  */
 export const API_VERSIONS = {
   V1_1: 'v1.1',
+  V2: 'v2', // Added V2
   V3: 'v3',
 } as const;
 
@@ -38,20 +39,22 @@ export const ENDPOINT_VERSIONS = {
   // Authentication endpoints
   AUTH_LOGIN: API_VERSIONS.V1_1,
   AUTH_REFRESH: API_VERSIONS.V1_1,
-  
+
   // Booking endpoints
   BOOKINGS_LIST: API_VERSIONS.V1_1,
   BOOKINGS_CREATE: API_VERSIONS.V1_1,
   BOOKINGS_DELETE: API_VERSIONS.V1_1,
   BOOKINGS_GET: API_VERSIONS.V1_1,
   USER_BOOKINGS: API_VERSIONS.V1_1,
-  
+
   // User endpoints
   USER_PROFILE: API_VERSIONS.V1_1,
   USER_PREFERENCES: API_VERSIONS.V1_1,
   USER_SEARCH: API_VERSIONS.V3,
-  USER_DETAILS: API_VERSIONS.V3,
-  
+  USER_DETAILS: API_VERSIONS.V1_1, // Updated to v1.1 based on user feedback
+  USER_FOLLOW_REQUEST: API_VERSIONS.V1_1,
+  USER_UNFOLLOW: API_VERSIONS.V1_1,
+
   // Workspace endpoints - these could use v3 for newer features
   WORKSPACES_INTERNAL: API_VERSIONS.V1_1, // Currently using v1.1, can change to V3 if needed
   WORKSPACE_GROUPS: API_VERSIONS.V1_1,    // Currently using v1.1, can change to V3 if needed
@@ -60,11 +63,15 @@ export const ENDPOINT_VERSIONS = {
   WORKSPACE_DETAILS: API_VERSIONS.V3,     // Example of v3 endpoint
   WORKSPACE_FLOORS: API_VERSIONS.V3,      // Example of v3 endpoint
   WORKSPACE_DESKS: API_VERSIONS.V3,       // Example of v3 endpoint
-  
+
   // Favorites endpoints
   FAVORITES_LIST: API_VERSIONS.V1_1,
   FAVORITES_ADD: API_VERSIONS.V1_1,
   FAVORITES_REMOVE: API_VERSIONS.V1_1,
+
+  // Scheduling endpoints
+  SCHEDULING_LIST: API_VERSIONS.V2,
+  SCHEDULING_STAFF_PLANNING: API_VERSIONS.V2,
 } as const;
 
 /**

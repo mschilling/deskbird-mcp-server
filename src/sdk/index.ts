@@ -20,6 +20,7 @@ export { UserApi } from './api/user.api.js';
 export { BookingsApi } from './api/bookings.api.js';
 export { FavoritesApi } from './api/favorites.api.js';
 export { WorkspacesApi } from './api/workspaces.api.js';
+export { SchedulingApi } from './api/scheduling.api.js';
 
 // Utility exports
 export { HttpClient } from './utils/http-client.js';

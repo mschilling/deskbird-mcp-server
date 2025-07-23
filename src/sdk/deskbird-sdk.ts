@@ -7,6 +7,7 @@ import { UserApi } from './api/user.api.js';
 import { BookingsApi } from './api/bookings.api.js';
 import { FavoritesApi } from './api/favorites.api.js';
 import { WorkspacesApi } from './api/workspaces.api.js';
+import { SchedulingApi } from './api/scheduling.api.js';
 
 /**
  * Main Deskbird SDK class that orchestrates all API clients
@@ -23,6 +24,7 @@ export class DeskbirdSdk {
   public bookings: BookingsApi;
   public favorites: FavoritesApi;
   public workspaces: WorkspacesApi;
+  public scheduling: SchedulingApi;
 
   // Configuration
   private config: DeskbirdSdkConfig;
@@ -50,6 +52,7 @@ export class DeskbirdSdk {
     this.bookings = new BookingsApi(this.httpClient);
     this.favorites = new FavoritesApi(this.httpClient);
     this.workspaces = new WorkspacesApi(this.httpClient);
+    this.scheduling = new SchedulingApi(this.httpClient);
 
     console.log(`[Deskbird SDK] Initialized for Deskbird API v${this.config.apiVersion}`);
   }

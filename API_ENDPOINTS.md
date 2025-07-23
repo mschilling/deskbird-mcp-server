@@ -26,7 +26,7 @@ The Deskbird MCP Server provides 10 tools that abstract common API operations. H
 | `deskbird_get_user_info` | `GET /user` | v1.1 | Get current user profile and settings |
 | `deskbird_get_available_desks` | `GET /company/internalWorkspaces/{id}/groups/{id}/floorConfig` | v1.1 | Get all desks from floor configuration |
 | `deskbird_search_users` | `GET /users` | v3 | Search company users with filters |
-| `deskbird_get_user_details` | `GET /users/{userId}` | v3 | Get detailed user information |
+| `deskbird_get_user_details` | `GET /user/{userId}` | v1.1 | Get detailed user information. By default, returns a full user profile. Can be restricted to basic info using `?basicInfo` query parameter. |
 
 ### Advanced Operations (via `deskbird_api_call` only)
 
@@ -94,6 +94,7 @@ The Deskbird MCP Server provides 10 tools that abstract common API operations. H
 | Endpoint Path | HTTP Method | Query String Options / Request Body | API Version | Comments/Description |
 |---------------|-------------|-------------------------------------|-------------|---------------------|
 | `/scheduling/list` | GET | `startDate`, `numberOfDays` | v2 | Get scheduling overview for multiple days with office status, bookings, and team presence |
+| `/scheduling/staffPlanning` | GET | `startDate`, `days`, `all`, `favorites` | v2 | Get staff planning overview with filtering options |
 
 ### Company Administration
 
