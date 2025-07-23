@@ -1,4 +1,3 @@
-// Refactored Deskbird MCP Server using the new SDK
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   CallToolRequestSchema,
@@ -225,26 +224,38 @@ const GET_USER_DETAILS_TOOL: Tool = {
   },
 };
 
-/**
- * Refactored Deskbird MCP Server using the new SDK
- */
 export class DeskbirdMcpServer {
   private readonly mcpServer: Server;
   private deskbirdSdk: DeskbirdSdk | null = null;
-  private readonly tools: Tool[] = [
-    BOOK_DESK_TOOL,
-    GET_USER_BOOKINGS_TOOL,
-    FAVORITE_DESK_TOOL,
-    UNFAVORITE_DESK_TOOL,
-    GET_USER_FAVORITES_TOOL,
-    GET_USER_INFO_TOOL,
-    GET_AVAILABLE_DESKS_TOOL,
-    DESKBIRD_API_CALL_TOOL,
-    SEARCH_USERS_TOOL,
-    GET_USER_DETAILS_TOOL,
-  ];
+  private readonly tools: Tool[];
+
+  private buildToolsList(): Tool[] {
+    const coreTools = [
+      BOOK_DESK_TOOL,
+      GET_USER_BOOKINGS_TOOL,
+      FAVORITE_DESK_TOOL,
+      UNFAVORITE_DESK_TOOL,
+      GET_USER_FAVORITES_TOOL,
+      GET_USER_INFO_TOOL,
+      GET_AVAILABLE_DESKS_TOOL,
+      SEARCH_USERS_TOOL,
+      GET_USER_DETAILS_TOOL,
+    ];
+
+    // Check if preview tools are enabled
+    const enablePreviewTools = process.env.ENABLE_PREVIEW_TOOLS === 'true' || process.env.ENABLE_PREVIEW_TOOLS === '1';
+
+    if (enablePreviewTools) {
+      console.error('Preview tools enabled: deskbird_api_call tool is available');
+      return [...coreTools, DESKBIRD_API_CALL_TOOL];
+    } else {
+      return coreTools;
+    }
+  }
 
   constructor() {
+    this.tools = this.buildToolsList();
+
     this.mcpServer = new Server(
       {
         name: 'deskbird-mcp-server-sdk',
@@ -325,6 +336,11 @@ export class DeskbirdMcpServer {
         } else if (request.params.name === GET_AVAILABLE_DESKS_TOOL.name) {
           return this.handleGetAvailableDesksWithSdk(request);
         } else if (request.params.name === DESKBIRD_API_CALL_TOOL.name) {
+          // Check if preview tools are enabled
+          const enablePreviewTools = process.env.ENABLE_PREVIEW_TOOLS === 'true' || process.env.ENABLE_PREVIEW_TOOLS === '1';
+          if (!enablePreviewTools) {
+            throw new Error(`Tool '${DESKBIRD_API_CALL_TOOL.name}' is not available. Set ENABLE_PREVIEW_TOOLS=true to enable preview tools.`);
+          }
           return this.handleDeskbirdApiCallWithSdk(request);
         } else if (request.params.name === SEARCH_USERS_TOOL.name) {
           return this.handleSearchUsersWithSdk(request);
@@ -337,9 +353,6 @@ export class DeskbirdMcpServer {
     );
   }
 
-  /**
-   * Refactored handleBookDesk using the SDK
-   */
   private async handleBookDeskWithSdk(request: any): Promise<any> {
     console.log("Executing tool 'deskbird_book_desk' with SDK");
 
@@ -385,9 +398,6 @@ export class DeskbirdMcpServer {
     }
   }
 
-  /**
-   * Refactored handleGetUserBookings using the SDK
-   */
   private async handleGetUserBookingsWithSdk(request: any): Promise<any> {
     console.log("Executing tool 'deskbird_get_user_bookings' with SDK");
 
@@ -432,9 +442,6 @@ export class DeskbirdMcpServer {
     }
   }
 
-  /**
-   * Refactored handleFavoriteDesk using the SDK
-   */
   private async handleFavoriteDeskWithSdk(request: any): Promise<any> {
     console.log("Executing tool 'deskbird_favorite_desk' with SDK");
 
@@ -472,9 +479,6 @@ export class DeskbirdMcpServer {
     }
   }
 
-  /**
-   * Refactored handleUnfavoriteDesk using the SDK
-   */
   private async handleUnfavoriteDeskWithSdk(request: CallToolRequest): Promise<CallToolResult> {
     console.log("Executing tool 'deskbird_unfavorite_desk' with SDK");
 
@@ -511,9 +515,6 @@ export class DeskbirdMcpServer {
     }
   }
 
-  /**
-   * Refactored handleGetUserFavorites using the SDK
-   */
   private async handleGetUserFavoritesWithSdk(request: CallToolRequest): Promise<CallToolResult> {
     console.log("Executing tool 'deskbird_get_user_favorites' with SDK");
 
@@ -569,9 +570,6 @@ export class DeskbirdMcpServer {
     }
   }
 
-  /**
-   * Refactored handleGetUserInfo using the SDK
-   */
   private async handleGetUserInfoWithSdk(request: CallToolRequest): Promise<CallToolResult> {
     console.log("Executing tool 'deskbird_get_user_info' with SDK");
 
@@ -640,9 +638,6 @@ export class DeskbirdMcpServer {
     }
   }
 
-  /**
-   * Refactored handleGetAvailableDesks using the SDK
-   */
   private async handleGetAvailableDesksWithSdk(request: CallToolRequest): Promise<CallToolResult> {
     console.log("Executing tool 'deskbird_get_available_desks' with SDK");
 
@@ -676,9 +671,6 @@ export class DeskbirdMcpServer {
     }
   }
 
-  /**
-   * Refactored handleDeskbirdApiCall using the SDK
-   */
   private async handleDeskbirdApiCallWithSdk(request: CallToolRequest): Promise<CallToolResult> {
     console.log("Executing tool 'deskbird_api_call' with SDK");
 

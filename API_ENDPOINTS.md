@@ -43,6 +43,8 @@ The Deskbird MCP Server provides 10 tools that abstract common API operations. H
 
 **💡 Tip**: Use dedicated MCP tools for common operations. Use `deskbird_api_call` for advanced scenarios, guest bookings, administrative tasks, or operations not covered by dedicated tools.
 
+**⚠️ Note**: The `deskbird_api_call` tool is a preview feature that must be explicitly enabled by setting `ENABLE_PREVIEW_TOOLS=true` in your environment configuration. It is disabled by default for security reasons.
+
 ## API Base Configuration
 
 - **Base URL**: `https://api.deskbird.com`
@@ -111,7 +113,11 @@ The Deskbird MCP Server provides 10 tools that abstract common API operations. H
 
 ## Using `deskbird_api_call` with These Endpoints
 
-The `deskbird_api_call` MCP tool provides direct access to all documented endpoints. Here are some practical examples:
+The `deskbird_api_call` MCP tool provides direct access to all documented endpoints. 
+
+**⚠️ Prerequisites**: This tool must be explicitly enabled by setting `ENABLE_PREVIEW_TOOLS=true` in your environment configuration. See the [Configuration Guide](README.md#preview-tools-configuration) for setup instructions.
+
+Here are some practical examples:
 
 ### Quick Examples
 

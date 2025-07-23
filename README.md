@@ -75,6 +75,7 @@ DESKBIRD_RESOURCE_ID=your_resource_id
 DESKBIRD_ZONE_ITEM_ID=your_zone_item_id
 DESKBIRD_WORKSPACE_ID=your_workspace_id
 DEFAULT_COMPANY_ID=your_company_id  # Optional: If not set, will be auto-discovered from user profile
+ENABLE_PREVIEW_TOOLS=false  # Optional: Set to 'true' to enable preview tools like deskbird_api_call
 ```
 
 ### Dynamic Company ID Resolution
@@ -86,6 +87,54 @@ The MCP server automatically handles company ID resolution in the following prio
 3. **Explicit Parameter**: Individual tool calls can still override the company ID by passing it explicitly
 
 This ensures the server works across different companies and environments without requiring hardcoded values.
+
+### Preview Tools Configuration
+
+The MCP server includes preview tools (like `deskbird_api_call`) that provide direct API access. These tools are disabled by default for security reasons.
+
+**To enable preview tools:**
+- Set `ENABLE_PREVIEW_TOOLS=true` in your `.env` file, OR
+- Set the environment variable in your MCP client configuration
+
+**Security Considerations:**
+- Preview tools provide unrestricted access to the Deskbird API
+- Only enable in trusted environments
+- Use with caution in production settings
+- Consider API rate limits and data validation when using direct API access
+
+**Configuration Examples:**
+
+For Claude Desktop (`claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "deskbird": {
+      "command": "npx",
+      "args": ["-y", "@mschilling/deskbird-mcp-server"],
+      "env": {
+        "ENABLE_PREVIEW_TOOLS": "true"
+      }
+    }
+  }
+}
+```
+
+For VS Code (`vscode_mcp_config.json`):
+```json
+{
+  "mcp": {
+    "servers": {
+      "deskbird": {
+        "command": "npx", 
+        "args": ["-y", "@mschilling/deskbird-mcp-server"],
+        "env": {
+          "ENABLE_PREVIEW_TOOLS": "true"
+        }
+      }
+    }
+  }
+}
+```
 
 ## Usage
 
@@ -126,7 +175,7 @@ The MCP server provides 10 tools that interact with various Deskbird API endpoin
 - [`deskbird_get_user_details`](#deskbird_get_user_details) - Get detailed user information
 
 #### 🔧 **Advanced/Debug**
-- [`deskbird_api_call`](#deskbird_api_call-️-preview-tool) - Direct API access (Preview Tool)
+- [`deskbird_api_call`](#deskbird_api_call-️-preview-tool) - Direct API access (Preview Tool, requires `ENABLE_PREVIEW_TOOLS=true`)
 
 ### `deskbird_book_desk`
 
@@ -218,6 +267,8 @@ Get detailed information about a specific user by their user ID.
 ### `deskbird_api_call` ⚠️ PREVIEW TOOL
 
 Execute any HTTP request to the Deskbird API with full control over path, method, headers, and body. This tool provides direct access to the Deskbird API for advanced users, debugging, and accessing endpoints not covered by dedicated tools.
+
+**⚠️ Prerequisites**: This tool must be explicitly enabled by setting `ENABLE_PREVIEW_TOOLS=true` in your environment configuration. It is disabled by default for security reasons.
 
 **⚠️ Security and Usage Considerations:**
 - This tool provides unrestricted access to the Deskbird API

@@ -28,6 +28,11 @@ DESKBIRD_RESOURCE_ID=your_resource_id
 DESKBIRD_ZONE_ITEM_ID=your_zone_item_id
 DESKBIRD_WORKSPACE_ID=your_workspace_id
 
+# Optional: Enable preview tools (deskbird_api_call)
+# WARNING: Preview tools provide direct API access and should be used with caution
+# Set to 'true' or '1' to enable, any other value or omission disables preview tools
+ENABLE_PREVIEW_TOOLS=false
+
 # Optional: Override default API endpoints
 # DESKBIRD_API_BASE_URL=https://app.deskbird.com/api
 # DESKBIRD_API_VERSION=v1.1
@@ -46,7 +51,10 @@ function generateClaudeConfig() {
     mcpServers: {
       deskbird: {
         command: "npx",
-        args: ["-y", "@mschilling/deskbird-mcp-server"]
+        args: ["-y", "@mschilling/deskbird-mcp-server"],
+        env: {
+          "ENABLE_PREVIEW_TOOLS": "false"
+        }
       }
     }
   };
@@ -62,7 +70,10 @@ function generateVSCodeConfig() {
       servers: {
         deskbird: {
           command: "npx",
-          args: ["-y", "@mschilling/deskbird-mcp-server"]
+          args: ["-y", "@mschilling/deskbird-mcp-server"],
+          env: {
+            "ENABLE_PREVIEW_TOOLS": "false"
+          }
         }
       }
     }
@@ -99,7 +110,12 @@ function showInstructions() {
 4. Test the server:
    npm start
 
-📚 Documentation:
+� Preview Tools:
+- Preview tools (like deskbird_api_call) are disabled by default for security
+- Set ENABLE_PREVIEW_TOOLS=true in your .env file to enable direct API access
+- Use with caution - preview tools provide unrestricted API access
+
+�📚 Documentation:
 - README.md - Full documentation and setup guide
 - API_ENDPOINTS.md - API reference
 
