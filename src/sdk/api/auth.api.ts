@@ -19,7 +19,7 @@ export class AuthApi {
    * Refresh access token using refresh token
    */
   async refreshAccessToken(refreshToken: string): Promise<string> {
-    console.log('[Auth API] Refreshing access token');
+    console.error('[Auth API] Refreshing access token');
     
     try {
       // Use URLSearchParams for form data
@@ -49,7 +49,7 @@ export class AuthApi {
         throw new Error('No access token received from refresh endpoint');
       }
 
-      console.log('[Auth API] Access token refreshed successfully');
+      console.error('[Auth API] Access token refreshed successfully');
       return tokenResponse.access_token;
     } catch (error: unknown) {
       handleDeskbirdException(error, 'refreshAccessToken');

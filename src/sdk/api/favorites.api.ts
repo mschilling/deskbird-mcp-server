@@ -17,7 +17,7 @@ export class FavoritesApi {
    * Add a desk to favorites by zone ID
    */
   async addFavorite(zoneId: number): Promise<FavoriteResourceResponse> {
-    console.log(`[Favorites API] Adding desk to favorites: ${zoneId}`);
+    console.error(`[Favorites API] Adding desk to favorites: ${zoneId}`);
     
     try {
       const response = await this.client.patch<FavoriteResourceResponse>(
@@ -39,7 +39,7 @@ export class FavoritesApi {
    * Remove a desk from favorites by zone ID
    */
   async removeFavorite(zoneId: number): Promise<UnfavoriteResourceResponse> {
-    console.log(`[Favorites API] Removing desk from favorites: ${zoneId}`);
+    console.error(`[Favorites API] Removing desk from favorites: ${zoneId}`);
     
     try {
       const response = await this.client.delete<UnfavoriteResourceResponse>(
@@ -60,7 +60,7 @@ export class FavoritesApi {
    * Toggle favorite status for a desk
    */
   async toggleFavorite(zoneId: number, isFavorite: boolean): Promise<FavoriteResourceResponse | UnfavoriteResourceResponse> {
-    console.log(`[Favorites API] Toggling favorite status for desk ${zoneId}: ${isFavorite ? 'add' : 'remove'}`);
+    console.error(`[Favorites API] Toggling favorite status for desk ${zoneId}: ${isFavorite ? 'add' : 'remove'}`);
     
     if (isFavorite) {
       return this.addFavorite(zoneId);

@@ -9,6 +9,7 @@ import {
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { createDeskbirdClient, type DeskbirdSdk } from './sdk/index.js';
 import { DateUtils } from './sdk/utils/date-utils.js';
+import { createLogger } from './utils/logger.js';
 import * as dotenvFlow from 'dotenv-flow';
 
 // Load environment variables
@@ -288,6 +289,7 @@ export class DeskbirdMcpServer {
   private readonly mcpServer: Server;
   private deskbirdSdk: DeskbirdSdk | null = null;
   private readonly tools: Tool[];
+  private readonly logger;
 
   private buildToolsList(): Tool[] {
     const coreTools = [
@@ -317,6 +319,7 @@ export class DeskbirdMcpServer {
   }
 
   constructor() {
+    this.logger = createLogger('DeskbirdMcpServer');
     this.tools = this.buildToolsList();
 
     this.mcpServer = new Server(
@@ -372,7 +375,7 @@ export class DeskbirdMcpServer {
   private registerRequestHandlers(): void {
     // Handler for ListToolsRequest
     this.mcpServer.setRequestHandler(ListToolsRequestSchema, async () => {
-      console.error('Received ListToolsRequest');
+      this.logger.debug('Received ListToolsRequest');
       return {
         tools: this.tools,
       };
@@ -382,7 +385,7 @@ export class DeskbirdMcpServer {
     this.mcpServer.setRequestHandler(
       CallToolRequestSchema,
       async (request) => {
-        console.error(`Received CallToolRequest for tool: ${request.params.name}`);
+        this.logger.debug(`Received CallToolRequest for tool: ${request.params.name}`);
 
         if (request.params.name === BOOK_DESK_TOOL.name) {
           return this.handleBookDeskWithSdk(request);
@@ -423,7 +426,7 @@ export class DeskbirdMcpServer {
   }
 
   private async handleBookDeskWithSdk(request: any): Promise<any> {
-    console.log("Executing tool 'deskbird_book_desk' with SDK");
+    this.logger.debug("Executing tool 'deskbird_book_desk' with SDK");
 
     try {
       const sdk = await this.initializeSdk();
@@ -458,7 +461,7 @@ export class DeskbirdMcpServer {
         }],
       };
     } catch (error) {
-      console.error('Error in handleBookDeskWithSdk:', error);
+      this.logger.error('Error in handleBookDeskWithSdk', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       return {
         content: [{ type: 'text', text: `Error: ${errorMessage}` }],
@@ -468,7 +471,7 @@ export class DeskbirdMcpServer {
   }
 
   private async handleGetUserBookingsWithSdk(request: any): Promise<any> {
-    console.log("Executing tool 'deskbird_get_user_bookings' with SDK");
+    this.logger.debug("Executing tool 'deskbird_get_user_bookings' with SDK");
 
     try {
       const sdk = await this.initializeSdk();
@@ -502,7 +505,7 @@ export class DeskbirdMcpServer {
         }],
       };
     } catch (error) {
-      console.error('Error in handleGetUserBookingsWithSdk:', error);
+      this.logger.error('Error in handleGetUserBookingsWithSdk', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       return {
         content: [{ type: 'text', text: `Error: ${errorMessage}` }],
@@ -512,7 +515,7 @@ export class DeskbirdMcpServer {
   }
 
   private async handleFavoriteDeskWithSdk(request: any): Promise<any> {
-    console.log("Executing tool 'deskbird_favorite_desk' with SDK");
+    this.logger.debug("Executing tool 'deskbird_favorite_desk' with SDK");
 
     try {
       const sdk = await this.initializeSdk();
@@ -539,7 +542,7 @@ export class DeskbirdMcpServer {
         }],
       };
     } catch (error) {
-      console.error('Error in handleFavoriteDeskWithSdk:', error);
+      this.logger.error('Error in handleFavoriteDeskWithSdk', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       return {
         content: [{ type: 'text', text: `Error: ${errorMessage}` }],
@@ -549,7 +552,7 @@ export class DeskbirdMcpServer {
   }
 
   private async handleUnfavoriteDeskWithSdk(request: CallToolRequest): Promise<CallToolResult> {
-    console.log("Executing tool 'deskbird_unfavorite_desk' with SDK");
+    this.logger.debug("Executing tool 'deskbird_unfavorite_desk' with SDK");
 
     try {
       const sdk = await this.initializeSdk();
@@ -575,7 +578,7 @@ export class DeskbirdMcpServer {
         }],
       };
     } catch (error) {
-      console.error('Error in handleUnfavoriteDeskWithSdk:', error);
+      this.logger.error('Error in handleUnfavoriteDeskWithSdk', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       return {
         content: [{ type: 'text', text: `Error: ${errorMessage}` }],
@@ -585,7 +588,7 @@ export class DeskbirdMcpServer {
   }
 
   private async handleGetUserFavoritesWithSdk(request: CallToolRequest): Promise<CallToolResult> {
-    console.log("Executing tool 'deskbird_get_user_favorites' with SDK");
+    this.logger.debug("Executing tool 'deskbird_get_user_favorites' with SDK");
 
     try {
       const sdk = await this.initializeSdk();
@@ -630,7 +633,7 @@ export class DeskbirdMcpServer {
         }],
       };
     } catch (error) {
-      console.error('Error in handleGetUserFavoritesWithSdk:', error);
+      this.logger.error('Error in handleGetUserFavoritesWithSdk', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       return {
         content: [{ type: 'text', text: `Error: ${errorMessage}` }],
@@ -640,7 +643,7 @@ export class DeskbirdMcpServer {
   }
 
   private async handleGetUserInfoWithSdk(request: CallToolRequest): Promise<CallToolResult> {
-    console.log("Executing tool 'deskbird_get_user_info' with SDK");
+    this.logger.debug("Executing tool 'deskbird_get_user_info' with SDK");
 
     try {
       const sdk = await this.initializeSdk();
@@ -698,7 +701,7 @@ export class DeskbirdMcpServer {
         }],
       };
     } catch (error) {
-      console.error('Error in handleGetUserInfoWithSdk:', error);
+      this.logger.error('Error in handleGetUserInfoWithSdk', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       return {
         content: [{ type: 'text', text: `Error: ${errorMessage}` }],
@@ -708,7 +711,7 @@ export class DeskbirdMcpServer {
   }
 
   private async handleGetAvailableDesksWithSdk(request: CallToolRequest): Promise<CallToolResult> {
-    console.log("Executing tool 'deskbird_get_available_desks' with SDK");
+    this.logger.debug("Executing tool 'deskbird_get_available_desks' with SDK");
 
     try {
       const sdk = await this.initializeSdk();
@@ -731,7 +734,7 @@ export class DeskbirdMcpServer {
         isError: false,
       };
     } catch (error) {
-      console.error('Error in handleGetAvailableDesksWithSdk:', error);
+      this.logger.error('Error in handleGetAvailableDesksWithSdk', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       return {
         content: [{ type: 'text', text: `Error: ${errorMessage}` }],
@@ -741,7 +744,7 @@ export class DeskbirdMcpServer {
   }
 
   private async handleDeskbirdApiCallWithSdk(request: CallToolRequest): Promise<CallToolResult> {
-    console.log("Executing tool 'deskbird_api_call' with SDK");
+    this.logger.debug("Executing tool 'deskbird_api_call' with SDK");
 
     try {
       const sdk = await this.initializeSdk();
@@ -784,7 +787,7 @@ export class DeskbirdMcpServer {
         isError: false,
       };
     } catch (error) {
-      console.error('Error in handleDeskbirdApiCallWithSdk:', error);
+      this.logger.error('Error in handleDeskbirdApiCallWithSdk', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       return {
         content: [{ type: 'text', text: `❌ **API Call Failed**\n\nError: ${errorMessage}` }],
@@ -797,7 +800,7 @@ export class DeskbirdMcpServer {
    * Handle user search using the SDK
    */
   private async handleSearchUsersWithSdk(request: CallToolRequest): Promise<CallToolResult> {
-    console.log("Executing tool 'deskbird_search_users' with SDK");
+    this.logger.debug("Executing tool 'deskbird_search_users' with SDK");
 
     try {
       const sdk = await this.initializeSdk();
@@ -833,7 +836,7 @@ export class DeskbirdMcpServer {
         isError: false,
       };
     } catch (error) {
-      console.error('Error in handleSearchUsersWithSdk:', error);
+      this.logger.error('Error in handleSearchUsersWithSdk', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       return {
         content: [{ type: 'text', text: `Error: ${errorMessage}` }],
@@ -846,7 +849,7 @@ export class DeskbirdMcpServer {
    * Handle getting user details using the SDK
    */
   private async handleGetUserDetailsWithSdk(request: CallToolRequest): Promise<CallToolResult> {
-    console.log("Executing tool 'deskbird_get_user_details' with SDK");
+    this.logger.debug("Executing tool 'deskbird_get_user_details' with SDK");
 
     try {
       const sdk = await this.initializeSdk();
@@ -873,7 +876,7 @@ export class DeskbirdMcpServer {
         isError: false,
       };
     } catch (error) {
-      console.error('Error in handleGetUserDetailsWithSdk:', error);
+      this.logger.error('Error in handleGetUserDetailsWithSdk', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       return {
         content: [{ type: 'text', text: `Error: ${errorMessage}` }],
@@ -886,7 +889,7 @@ export class DeskbirdMcpServer {
    * Handle following a user using the SDK
    */
   private async handleFollowUserWithSdk(request: CallToolRequest): Promise<CallToolResult> {
-    console.log("Executing tool 'deskbird_follow_user' with SDK");
+    this.logger.debug("Executing tool 'deskbird_follow_user' with SDK");
 
     try {
       const sdk = await this.initializeSdk();
@@ -913,7 +916,7 @@ export class DeskbirdMcpServer {
         isError: false,
       };
     } catch (error) {
-      console.error('Error in handleFollowUserWithSdk:', error);
+      this.logger.error('Error in handleFollowUserWithSdk', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       return {
         content: [{ type: 'text', text: `Error: ${errorMessage}` }],
@@ -926,7 +929,7 @@ export class DeskbirdMcpServer {
    * Handle unfollowing a user using the SDK
    */
   private async handleUnfollowUserWithSdk(request: CallToolRequest): Promise<CallToolResult> {
-    console.log("Executing tool 'deskbird_unfollow_user' with SDK");
+    this.logger.debug("Executing tool 'deskbird_unfollow_user' with SDK");
 
     try {
       const sdk = await this.initializeSdk();
@@ -953,7 +956,7 @@ export class DeskbirdMcpServer {
         isError: false,
       };
     } catch (error) {
-      console.error('Error in handleUnfollowUserWithSdk:', error);
+      this.logger.error('Error in handleUnfollowUserWithSdk', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       return {
         content: [{ type: 'text', text: `Error: ${errorMessage}` }],
@@ -966,7 +969,7 @@ export class DeskbirdMcpServer {
    * Handle getting staff planning using the SDK
    */
   private async handleGetStaffPlanningWithSdk(request: CallToolRequest): Promise<CallToolResult> {
-    console.log("Executing tool 'deskbird_get_staff_planning' with SDK");
+    this.logger.debug("Executing tool 'deskbird_get_staff_planning' with SDK");
 
     try {
       const sdk = await this.initializeSdk();
@@ -997,7 +1000,7 @@ export class DeskbirdMcpServer {
         isError: false,
       };
     } catch (error) {
-      console.error('Error in handleGetStaffPlanningWithSdk:', error);
+      this.logger.error('Error in handleGetStaffPlanningWithSdk', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       return {
         content: [{ type: 'text', text: `Error: ${errorMessage}` }],
@@ -1010,11 +1013,11 @@ export class DeskbirdMcpServer {
 
   public async connect(transport: Transport): Promise<void> {
     await this.mcpServer.connect(transport);
-    console.error('Deskbird MCP Server (SDK-based) connected and running.');
+    this.logger.info('Deskbird MCP Server (SDK-based) connected and running.');
   }
 
   public async close(): Promise<void> {
     await this.mcpServer.close();
-    console.error('Deskbird MCP Server (SDK-based) closed.');
+    this.logger.info('Deskbird MCP Server (SDK-based) closed.');
   }
 }

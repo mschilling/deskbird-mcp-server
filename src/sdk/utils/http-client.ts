@@ -54,7 +54,7 @@ export class HttpClient {
     }
 
     try {
-      console.log(`[HTTP Client] Making ${method} request to: ${url}`);
+      // HTTP request logging can be enabled via config if needed
       
       const response = await fetch(url, requestOptions);
       
