@@ -44,7 +44,7 @@ export * from './types/index.js';
  * Simplified for third-party API consumers (production only)
  */
 export function createDeskbirdClient(config: CreateDeskbirdClientConfig): DeskbirdSdk {
-  console.log('[Deskbird SDK] Creating client for Deskbird API');
+  // SDK creation logging is handled by the SDK constructor
 
   // Map the minimal config to the full SDK config
   const sdkConfig: DeskbirdSdkConfig = {

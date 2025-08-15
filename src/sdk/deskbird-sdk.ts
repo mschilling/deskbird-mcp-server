@@ -8,6 +8,7 @@ import { BookingsApi } from './api/bookings.api.js';
 import { FavoritesApi } from './api/favorites.api.js';
 import { WorkspacesApi } from './api/workspaces.api.js';
 import { SchedulingApi } from './api/scheduling.api.js';
+import { createLogger } from '../utils/logger.js';
 
 /**
  * Main Deskbird SDK class that orchestrates all API clients
@@ -18,6 +19,7 @@ export class DeskbirdSdk {
   private authApi: AuthApi;
   private currentAccessToken: string | null = null;
   private tokenRefreshPromise: Promise<string> | null = null;
+  private readonly logger = createLogger('DeskbirdSdk');
 
   // Expose API clients as public properties
   public user: UserApi;
@@ -54,7 +56,7 @@ export class DeskbirdSdk {
     this.workspaces = new WorkspacesApi(this.httpClient);
     this.scheduling = new SchedulingApi(this.httpClient);
 
-    console.log(`[Deskbird SDK] Initialized for Deskbird API v${this.config.apiVersion}`);
+    this.logger.info(`Initialized for Deskbird API v${this.config.apiVersion}`);
   }
 
   /**
@@ -86,7 +88,7 @@ export class DeskbirdSdk {
    * Refresh the access token
    */
   private async refreshAccessToken(): Promise<string> {
-    console.log('[Deskbird SDK] Refreshing access token');
+    this.logger.debug('Refreshing access token');
 
     try {
       const accessToken = await this.authApi.refreshAccessToken(this.config.refreshToken);
@@ -94,7 +96,7 @@ export class DeskbirdSdk {
       this.updateHttpClientAuth();
       return accessToken;
     } catch (error) {
-      console.error('[Deskbird SDK] Failed to refresh access token:', error);
+      this.logger.error('Failed to refresh access token', error);
       throw error;
     }
   }
@@ -114,13 +116,13 @@ export class DeskbirdSdk {
    * Initialize the SDK (authenticate and prepare for API calls)
    */
   async initialize(): Promise<void> {
-    console.log('[Deskbird SDK] Initializing SDK');
+    this.logger.info('Initializing SDK');
 
     try {
       await this.ensureAccessToken();
-      console.log('[Deskbird SDK] SDK initialized successfully');
+      this.logger.info('SDK initialized successfully');
     } catch (error) {
-      console.error('[Deskbird SDK] Failed to initialize SDK:', error);
+      this.logger.error('Failed to initialize SDK', error);
       throw error;
     }
   }
@@ -140,7 +142,7 @@ export class DeskbirdSdk {
     queryParams?: Record<string, string | number | boolean>,
     headers?: Record<string, string>
   ): Promise<T> {
-    console.log(`[Deskbird SDK] Making ${method} request to: ${path}`);
+    this.logger.debug(`Making ${method} request to: ${path}`);
 
     await this.ensureAccessToken();
 
@@ -148,7 +150,7 @@ export class DeskbirdSdk {
     let fullPath = path;
     if (!path.match(/^\/v\d+(\.\d+)?/)) {
       fullPath = buildVersionedPath(this.config.apiVersion || API_VERSIONS.V1_1, path);
-      console.log(`[Deskbird SDK] Auto-versioned path: ${fullPath}`);
+      this.logger.debug(`Auto-versioned path: ${fullPath}`);
     }
 
     // Build query string if provided
@@ -184,7 +186,7 @@ export class DeskbirdSdk {
       return this.cachedCompanyId;
     }
 
-    console.log('[Deskbird SDK] Getting company ID');
+    console.error('[Deskbird SDK] Getting company ID');
 
     await this.ensureAccessToken();
 
@@ -192,7 +194,7 @@ export class DeskbirdSdk {
     let companyId = this.config.defaultCompanyId;
 
     if (!companyId) {
-      console.log('[Deskbird SDK] No default company ID provided, discovering from current user');
+      this.logger.debug('No default company ID provided, discovering from current user');
       const currentUser = await this.user.getCurrentUser();
       companyId = currentUser.companyId || currentUser.data?.companyId;
 
@@ -200,9 +202,9 @@ export class DeskbirdSdk {
         throw new Error('Unable to determine company ID from current user or configuration');
       }
 
-      console.log(`[Deskbird SDK] Discovered company ID from user: ${companyId}`);
+      this.logger.debug(`Discovered company ID from user: ${companyId}`);
     } else {
-      console.log(`[Deskbird SDK] Using configured company ID: ${companyId}`);
+      this.logger.debug(`Using configured company ID: ${companyId}`);
     }
 
     // Cache the company ID
@@ -217,7 +219,7 @@ export class DeskbirdSdk {
     workspaceId: string;
     groupId: string;
   }> {
-    console.log('[Deskbird SDK] Getting workspace configuration');
+    this.logger.debug('Getting workspace configuration');
 
     await this.ensureAccessToken();
 
@@ -240,7 +242,7 @@ export class DeskbirdSdk {
    * Find zone ID for a desk number (convenience method)
    */
   async findDeskZoneId(deskNumber: number): Promise<number | null> {
-    console.log(`[Deskbird SDK] Finding zone ID for desk: ${deskNumber}`);
+    this.logger.debug(`Finding zone ID for desk: ${deskNumber}`);
 
     const { workspaceId, groupId } = await this.getWorkspaceConfig();
     return this.workspaces.findDeskZoneId(deskNumber, workspaceId, groupId);
@@ -250,7 +252,7 @@ export class DeskbirdSdk {
    * Get all available desks (convenience method)
    */
   async getAvailableDesks() {
-    console.log('[Deskbird SDK] Getting all available desks');
+    console.error('[Deskbird SDK] Getting all available desks');
 
     const { workspaceId, groupId } = await this.getWorkspaceConfig();
     return this.workspaces.getAvailableDesks(workspaceId, groupId);
@@ -265,7 +267,7 @@ export class DeskbirdSdk {
     startHour?: number;
     endHour?: number;
   }) {
-    console.log(`[Deskbird SDK] Booking desk ${params.deskNumber} for ${params.date}`);
+    this.logger.debug(`Booking desk ${params.deskNumber} for ${params.date}`);
 
     await this.ensureAccessToken();
 
@@ -314,7 +316,7 @@ export class DeskbirdSdk {
     sortOrder?: 'ASC' | 'DESC';
     excludeUserIds?: string;
   }) {
-    console.log(`[Deskbird SDK] Searching users with query: ${params.searchQuery}`);
+    this.logger.debug(`Searching users with query: ${params.searchQuery}`);
 
     // Use provided company ID or get dynamic one
     let companyId = params.companyId;
@@ -333,7 +335,7 @@ export class DeskbirdSdk {
    * Add desk to favorites by desk number (convenience method)
    */
   async favoriteDeskByNumber(deskNumber: number) {
-    console.log(`[Deskbird SDK] Adding desk ${deskNumber} to favorites`);
+    this.logger.debug(`Adding desk ${deskNumber} to favorites`);
 
     const zoneId = await this.findDeskZoneId(deskNumber);
     if (!zoneId) {
@@ -347,7 +349,7 @@ export class DeskbirdSdk {
    * Remove desk from favorites by desk number (convenience method)
    */
   async unfavoriteDeskByNumber(deskNumber: number) {
-    console.log(`[Deskbird SDK] Removing desk ${deskNumber} from favorites`);
+    this.logger.debug(`Removing desk ${deskNumber} from favorites`);
 
     const zoneId = await this.findDeskZoneId(deskNumber);
     if (!zoneId) {

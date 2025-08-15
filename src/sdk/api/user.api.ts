@@ -43,7 +43,7 @@ export class UserApi {
    * Get current user information
    */
   async getCurrentUser(): Promise<UserResponse> {
-    console.log('[User API] Getting current user information');
+    console.error('[User API] Getting current user information');
 
     try {
       const response = await this.client.get<UserResponse>(
@@ -64,7 +64,7 @@ export class UserApi {
    * Get user's favorite resources
    */
   async getUserFavorites(): Promise<FavoriteResource[]> {
-    console.log('[User API] Getting user favorite resources');
+    console.error('[User API] Getting user favorite resources');
 
     try {
       const userData = await this.getCurrentUser();
@@ -112,7 +112,7 @@ export class UserApi {
       externalProvider: string;
     };
   }> {
-    console.log('[User API] Getting user profile summary');
+    console.error('[User API] Getting user profile summary');
 
     try {
       const userData = await this.getCurrentUser();
@@ -169,7 +169,7 @@ export class UserApi {
     sortOrder?: 'ASC' | 'DESC';
     excludeUserIds?: string;
   }): Promise<UserSearchResponse> {
-    console.log('[User API] Searching users with query:', params.searchQuery);
+    console.error('[User API] Searching users with query:', params.searchQuery);
 
     try {
       // Build query parameters
@@ -205,7 +205,7 @@ export class UserApi {
    * Get detailed user information by user ID
    */
   async getUserById(userId: string): Promise<UserDetails> {
-    console.log('[User API] Getting user details for ID:', userId);
+    console.error('[User API] Getting user details for ID:', userId);
 
     try {
       // We will always return the full profile, so no ?basicInfo query param
@@ -227,7 +227,7 @@ export class UserApi {
    * Send a follow request to a user
    */
   async followUser(userId: string): Promise<any> {
-    console.log('[User API] Sending follow request to user ID:', userId);
+    console.error('[User API] Sending follow request to user ID:', userId);
 
     try {
       const response = await this.client.post(
@@ -249,7 +249,7 @@ export class UserApi {
    * Unfollow a user
    */
   async unfollowUser(userId: string): Promise<any> {
-    console.log('[User API] Unfollowing user ID:', userId);
+    console.error('[User API] Unfollowing user ID:', userId);
 
     try {
       const response = await this.client.delete(

@@ -23,7 +23,7 @@ export class BookingsApi {
    * Create a new booking
    */
   async createBooking(bookingRequest: CreateBookingRequest): Promise<CreateBookingResponse> {
-    console.log('[Bookings API] Creating new booking');
+    console.error('[Bookings API] Creating new booking');
     
     try {
       const response = await this.client.post<CreateBookingResponse>(
@@ -45,7 +45,7 @@ export class BookingsApi {
    * Get user's bookings with filtering options
    */
   async getUserBookings(params: GetUserBookingsParams = {}): Promise<BookingsListResponse> {
-    console.log('[Bookings API] Getting user bookings with params:', params);
+    console.error('[Bookings API] Getting user bookings with params:', params);
     
     try {
       // Set defaults
@@ -77,7 +77,7 @@ export class BookingsApi {
    * Cancel a booking by ID
    */
   async cancelBooking(bookingId: string): Promise<void> {
-    console.log(`[Bookings API] Cancelling booking: ${bookingId}`);
+    console.error(`[Bookings API] Cancelling booking: ${bookingId}`);
     
     try {
       const response = await this.client.delete(
@@ -96,7 +96,7 @@ export class BookingsApi {
    * Get booking details by ID
    */
   async getBooking(bookingId: string): Promise<Booking> {
-    console.log(`[Bookings API] Getting booking details: ${bookingId}`);
+    console.error(`[Bookings API] Getting booking details: ${bookingId}`);
     
     try {
       const response = await this.client.get<{ booking: Booking }>(
@@ -117,7 +117,7 @@ export class BookingsApi {
    * Get upcoming bookings for the user
    */
   async getUpcomingBookings(limit: number = 10): Promise<Booking[]> {
-    console.log(`[Bookings API] Getting upcoming bookings (limit: ${limit})`);
+    console.error(`[Bookings API] Getting upcoming bookings (limit: ${limit})`);
     
     try {
       const bookingsResponse = await this.getUserBookings({
