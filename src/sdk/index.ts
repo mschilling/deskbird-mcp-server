@@ -25,6 +25,7 @@ export { SchedulingApi } from './api/scheduling.api.js';
 // Utility exports
 export { HttpClient } from './utils/http-client.js';
 export { DateUtils } from './utils/date-utils.js';
+export { SpatialUtils } from './utils/spatial-utils.js';
 export {
   buildVersionedPath,
   API_VERSIONS,

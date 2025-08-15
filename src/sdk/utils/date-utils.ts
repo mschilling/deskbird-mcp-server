@@ -85,6 +85,33 @@ export class DateUtils {
   }
 
   /**
+   * Get today's date as a string in YYYY-MM-DD format
+   */
+  static getTodayDateString(timezone: string = this.DEFAULT_TIMEZONE): string {
+    return this.today(timezone).toFormat('yyyy-MM-dd');
+  }
+
+  /**
+   * Generate full day time range (7 AM to 11 PM) for a given date
+   * Used for zone availability queries
+   */
+  static generateDayTimeRange(
+    dateString: string, 
+    timezone: string = this.DEFAULT_TIMEZONE
+  ): { startTime: number; endTime: number } {
+    const date = this.parseDate(dateString, timezone);
+    
+    // 7:00 AM to 11:00 PM (16-hour window)
+    const startTime = date.set({ hour: 7, minute: 0, second: 0, millisecond: 0 });
+    const endTime = date.set({ hour: 23, minute: 0, second: 0, millisecond: 0 });
+    
+    return {
+      startTime: this.toTimestamp(startTime),
+      endTime: this.toTimestamp(endTime),
+    };
+  }
+
+  /**
    * Validate booking date (not in the past, not on weekend, etc.)
    */
   static validateBookingDate(
