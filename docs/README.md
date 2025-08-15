@@ -4,6 +4,16 @@ This directory contains comprehensive technical documentation for the Deskbird M
 
 ## Available Documentation
 
+### 🗺️ [Spatial Awareness Endpoints](./spatial-endpoints.md)
+Comprehensive guide to the office social radar capabilities, including zone availability and floor configuration endpoints for proximity-based desk management.
+
+**Topics Covered:**
+- Real-time desk occupancy and availability queries
+- Floor plan coordinates and spatial calculations
+- Proximity analysis and colleague location tracking
+- Smart desk booking and team clustering
+- Example queries and integration patterns
+
 ### 📋 [Logging Best Practices](./logging-best-practices.md)
 Essential guide for implementing proper logging in MCP servers to avoid JSON-RPC protocol violations and Claude Desktop integration issues.
 

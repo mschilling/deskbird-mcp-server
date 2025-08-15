@@ -34,8 +34,20 @@ This is a Model Context Protocol (MCP) server that integrates with the Deskbird 
 - `deskbird_get_user_info` - Get current user profile information
 - `deskbird_search_users` - Search for company users
 - `deskbird_get_staff_planning` - View team scheduling
+- `deskbird_get_zone_availability` - Real-time desk occupancy and availability
+- `deskbird_get_floor_config` - Floor plan layout with desk coordinates
 - `deskbird_api_call` - Direct API access (preview tool)
 - And more...
+
+**🗺️ Spatial Awareness Features**:
+The server now includes "office social radar" capabilities enabling intelligent queries about desk proximity and colleague locations:
+
+- **"Who's sitting near me today?"** - Find colleagues in nearby desks
+- **"Find available desks near my team"** - Proximity-based desk booking  
+- **"When will nearby desks be free?"** - Time-based availability with spatial context
+- **"Show me the seating map for this afternoon"** - Visual occupancy planning
+
+These features combine real-time occupancy data with precise floor plan coordinates to enable smart office navigation and collaboration planning.
 
 ### Authentication Flow
 

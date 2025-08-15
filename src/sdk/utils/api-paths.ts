@@ -22,6 +22,7 @@ export function buildVersionedPath(version: string, path: string): string {
  */
 export const API_VERSIONS = {
   V1_1: 'v1.1',
+  V1_2: 'v1.2',
   V2: 'v2', // Added V2
   V3: 'v3',
 } as const;

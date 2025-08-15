@@ -285,6 +285,57 @@ const UNFOLLOW_USER_TOOL: Tool = {
   },
 };
 
+const GET_ZONE_AVAILABILITY_TOOL: Tool = {
+  name: 'deskbird_get_zone_availability',
+  description: 'Get real-time desk availability and occupancy for a zone within a specific time range. Perfect for finding who sits where and when. Enables "office social radar" queries like "Who\'s sitting near me today?" and "Find available desks near my team".',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      workspace_id: {
+        type: 'string',
+        description: 'The workspace/office identifier (e.g., "6817").',
+      },
+      zone_id: {
+        type: 'string',
+        description: 'The zone/area identifier (e.g., "70645" for main workspace area).',
+      },
+      start_time: {
+        type: 'number',
+        description: 'Start time as Unix timestamp in milliseconds. If not provided and no date specified, defaults to today 7:00 AM.',
+      },
+      end_time: {
+        type: 'number',
+        description: 'End time as Unix timestamp in milliseconds. If not provided and no date specified, defaults to today 11:00 PM.',
+      },
+      date: {
+        type: 'string',
+        format: 'date',
+        description: 'Optional: Date in YYYY-MM-DD format. If provided, automatically generates start/end times for full day (7:00 AM - 11:00 PM). Overrides start_time/end_time if provided.',
+      },
+    },
+    required: ['workspace_id', 'zone_id'],
+  },
+};
+
+const GET_FLOOR_CONFIG_TOOL: Tool = {
+  name: 'deskbird_get_floor_config',
+  description: 'Retrieves detailed floor plan configuration including exact desk coordinates and zone layout for spatial analysis. Enables desk proximity calculations and physical office mapping. Use with zone availability data to answer questions about nearby colleagues and optimal desk locations.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      workspace_id: {
+        type: 'string',
+        description: 'The workspace/office identifier (e.g., "6817").',
+      },
+      group_id: {
+        type: 'string',
+        description: 'The floor/group identifier within the workspace (e.g., "18507").',
+      },
+    },
+    required: ['workspace_id', 'group_id'],
+  },
+};
+
 export class DeskbirdMcpServer {
   private readonly mcpServer: Server;
   private deskbirdSdk: DeskbirdSdk | null = null;
@@ -305,6 +356,8 @@ export class DeskbirdMcpServer {
       FOLLOW_USER_TOOL,
       UNFOLLOW_USER_TOOL,
       GET_STAFF_PLANNING_TOOL,
+      GET_ZONE_AVAILABILITY_TOOL,
+      GET_FLOOR_CONFIG_TOOL,
     ];
 
     // Check if preview tools are enabled
@@ -418,6 +471,10 @@ export class DeskbirdMcpServer {
           return this.handleUnfollowUserWithSdk(request);
         } else if (request.params.name === GET_STAFF_PLANNING_TOOL.name) {
           return this.handleGetStaffPlanningWithSdk(request);
+        } else if (request.params.name === GET_ZONE_AVAILABILITY_TOOL.name) {
+          return this.handleGetZoneAvailabilityWithSdk(request);
+        } else if (request.params.name === GET_FLOOR_CONFIG_TOOL.name) {
+          return this.handleGetFloorConfigWithSdk(request);
         } else {
           throw new Error(`Unknown tool: ${request.params.name}`);
         }
@@ -1001,6 +1058,102 @@ export class DeskbirdMcpServer {
       };
     } catch (error) {
       this.logger.error('Error in handleGetStaffPlanningWithSdk', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      return {
+        content: [{ type: 'text', text: `Error: ${errorMessage}` }],
+        isError: true,
+      };
+    }
+  }
+
+  private async handleGetZoneAvailabilityWithSdk(request: CallToolRequest): Promise<CallToolResult> {
+    this.logger.debug("Executing tool 'deskbird_get_zone_availability' with SDK");
+
+    try {
+      const sdk = await this.initializeSdk();
+      const params = request.params.arguments;
+
+      // Validate required parameters
+      if (!params || !params.workspace_id || !params.zone_id) {
+        throw new Error('workspace_id and zone_id are required parameters');
+      }
+
+      // Handle time range generation
+      let startTime = params.start_time as number | undefined;
+      let endTime = params.end_time as number | undefined;
+
+      if (params.date) {
+        // Generate full day range from date (7 AM to 11 PM Europe/Amsterdam)
+        const { startTime: dayStart, endTime: dayEnd } = DateUtils.generateDayTimeRange(params.date as string);
+        startTime = dayStart;
+        endTime = dayEnd;
+      } else if (!startTime || !endTime) {
+        // Default to today if no time range specified
+        const today = DateUtils.getTodayDateString();
+        const { startTime: dayStart, endTime: dayEnd } = DateUtils.generateDayTimeRange(today);
+        startTime = dayStart;
+        endTime = dayEnd;
+      }
+
+      this.logger.debug(`Getting zone availability for workspace ${params.workspace_id}, zone ${params.zone_id}, time range: ${startTime} - ${endTime}`);
+
+      const result = await sdk.getZoneAvailability({
+        workspaceId: params.workspace_id as string,
+        zoneId: params.zone_id as string,
+        startTime: startTime!,
+        endTime: endTime!
+      });
+
+      return {
+        content: [{
+          type: 'text',
+          text: `Zone Availability Retrieved Successfully!\n\nZone: ${result.name} (${result.type})\nCapacity: ${result.capacity} desks\nCurrently Available: ${result.totalAvailable} desks\nCurrently Occupied: ${result.availability.used} desks\nActive Users: ${result.availability.users.length}\n\nDetailed occupancy and availability data:\n${JSON.stringify(result, null, 2)}`
+        }],
+        isError: false,
+      };
+    } catch (error) {
+      this.logger.error('Error in handleGetZoneAvailabilityWithSdk', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      return {
+        content: [{ type: 'text', text: `Error: ${errorMessage}` }],
+        isError: true,
+      };
+    }
+  }
+
+  private async handleGetFloorConfigWithSdk(request: CallToolRequest): Promise<CallToolResult> {
+    this.logger.debug("Executing tool 'deskbird_get_floor_config' with SDK");
+
+    try {
+      const sdk = await this.initializeSdk();
+      const params = request.params.arguments;
+
+      // Validate required parameters
+      if (!params || !params.workspace_id || !params.group_id) {
+        throw new Error('workspace_id and group_id are required parameters');
+      }
+
+      this.logger.debug(`Getting floor config for workspace ${params.workspace_id}, group ${params.group_id}`);
+
+      const result = await sdk.getFloorConfig({
+        workspaceId: params.workspace_id as string,
+        groupId: params.group_id as string
+      });
+
+      // Parse the floor config to provide more readable information
+      const floorLayout = result.floorConfig ? JSON.parse(result.floorConfig) : null;
+      const deskCount = floorLayout?.areas[0]?.desks?.length || 0;
+      const zoneName = floorLayout?.areas[0]?.title || 'Unknown';
+
+      return {
+        content: [{
+          type: 'text',
+          text: `Floor Configuration Retrieved Successfully!\n\nFloor: ${result.name}\nZone: ${zoneName}\nTotal Desks: ${deskCount}\nConfiguration Ready: ${result.floorConfigReady}\nInteractive Image Available: ${!!result.interactiveImage}\n\nFloor layout includes desk coordinates, zone boundaries, and spatial mapping data.\n\nFull configuration data:\n${JSON.stringify(result, null, 2)}`
+        }],
+        isError: false,
+      };
+    } catch (error) {
+      this.logger.error('Error in handleGetFloorConfigWithSdk', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       return {
         content: [{ type: 'text', text: `Error: ${errorMessage}` }],

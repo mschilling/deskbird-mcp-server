@@ -360,6 +360,55 @@ export class DeskbirdSdk {
   }
 
   /**
+   * Get real-time zone availability and occupancy
+   */
+  async getZoneAvailability(params: {
+    workspaceId: string;
+    zoneId: string;
+    startTime: number;
+    endTime: number;
+  }) {
+    this.logger.debug(`Getting zone availability for workspace ${params.workspaceId}, zone ${params.zoneId}`);
+
+    const path = buildVersionedPath(
+      this.config.apiVersion || API_VERSIONS.V1_2,
+      `/internalWorkspaces/${params.workspaceId}/zones/${params.zoneId}`
+    );
+
+    const queryParams = {
+      internal: true,
+      startTime: params.startTime,
+      endTime: params.endTime,
+    };
+
+    return this.apiCall('GET', path, undefined, queryParams);
+  }
+
+  /**
+   * Get floor configuration with desk coordinates and layout
+   */
+  async getFloorConfig(params: {
+    workspaceId: string;
+    groupId: string;
+  }) {
+    this.logger.debug(`Getting floor config for workspace ${params.workspaceId}, group ${params.groupId}`);
+
+    const path = buildVersionedPath(
+      this.config.apiVersion || API_VERSIONS.V1_1,
+      `/company/internalWorkspaces/${params.workspaceId}/groups/${params.groupId}/floorConfig`
+    );
+
+    const response = await this.apiCall('GET', path);
+    
+    // The API returns { success: boolean, data: {...} }, so extract the data
+    if (response?.success && response?.data) {
+      return response.data;
+    }
+    
+    throw new Error('Invalid response format from floor config API');
+  }
+
+  /**
    * Get the underlying HTTP client (use with caution)
    */
   getHttpClient(): HttpClient {
