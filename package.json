@@ -51,7 +51,7 @@
     "luxon": "^3.7.1"
   },
   "devDependencies": {
-    "@types/luxon": "^3.6.2",
+    "@types/luxon": "^3.7.1",
     "@types/node": "^24.2.1",
     "shx": "^0.3.4",
     "ts-node": "^10.9.2",
