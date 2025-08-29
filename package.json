@@ -1,6 +1,6 @@
 {
   "name": "@mschilling/deskbird-mcp-server",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "MCP server for Deskbird desk booking integration.",
   "main": "dist/main.js",
   "type": "module",
